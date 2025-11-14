@@ -688,9 +688,7 @@ Rectangle {
                 id:loader
                 anchors.fill: parent
                 sourceComponent: {
-                    if (!modelData) return emptyComponent
                     if (modelData.type === "process") return processDetailComponent
-                    return emptyComponent
                 }
 
                 property var tabData: modelData || {}
@@ -698,21 +696,6 @@ Rectangle {
         }
     }
 
-    // ==================== 内容详情组件 ====================
-
-    // 空状态组件
-    Component {
-        id: emptyComponent
-        Rectangle {
-            color: "#1e1e1e"
-            Text {
-                anchors.centerIn: parent
-                text: "选择一个项目以查看详情"
-                color: "#cccccc"
-                font.pixelSize: 16
-            }
-        }
-    }
 
     // 进程详情组件 - 嵌入子进程窗口
     Component {
@@ -773,8 +756,7 @@ Rectangle {
                                     // 启动后尝试嵌入窗口，进行多次重试
                                     // 使用 Qt.callLater 确保容器完全初始化后再尝试嵌入
                                     Qt.callLater(function() {
-                                        if (processDetailRoot && processDetailRoot.embeddedContainer) {
-                                            var container = processDetailRoot.embeddedContainer;
+                                            var container = loader.item ? loader.item.embeddedContainer : null
                                             // 验证容器是否已关联到窗口
                                             if (container && container.window) {
                                                 console.log("[QML] 开始嵌入窗口:", processName);
@@ -784,9 +766,6 @@ Rectangle {
                                                 // 等待窗口准备就绪后再尝试
                                                 waitForContainerAndEmbed(processName, container);
                                             }
-                                        } else {
-                                            console.error("[QML] embeddedContainer 无效:", processName);
-                                        }
                                     });
                                 }
                             }
@@ -818,78 +797,63 @@ Rectangle {
                 }
 
                 // 嵌入窗口容器
-                Rectangle {
-                    id: embeddedWindowContainer
-                    Layout.fillWidth: true
-                    Layout.fillHeight: true
-                    color: "#000000"
-                    border.color: "#3e3e42"
-                    border.width: 1
+Rectangle {
+    id: embeddedWindowContainer
+    Layout.fillWidth: true
+    Layout.fillHeight: true
+    color: "#000000"
+    border.color: "#3e3e42"
+    border.width: 1
 
-                    property var windowId: 0
-                    property bool isReady: false // 标记容器是否已准备好
+    property var windowId: 0
+    property bool isReady: false // 标记容器是否已准备好
 
-                    Component.onCompleted: {
-                        console.log("[QML] embeddedWindowContainer Component.onCompleted");
-                        // 延迟标记为准备就绪，确保窗口已关联
-                        Qt.callLater(function() {
-                            if (window) {
-                                isReady = true;
-                                console.log("[QML] embeddedWindowContainer 已准备好，窗口ID:", window.winId);
-                            }
-                        });
-                    }
-
-                    onWindowChanged: function(window) { // 明确声明 'window' 参数
-                        if (window) { // 确保窗口有效
-                            isReady = true;
-                            console.log("[QML] embeddedWindowContainer's window is now available, windowID:", window.winId);
-                        } else {
-                            isReady = false;
-                        }
-                    }
+    Component.onCompleted: {
+        console.log("[QML] embeddedWindowContainer Component.onCompleted");
+        // 不再需要延迟函数，因为 onWindowChanged 会处理
+    }
 
                     // 当没有嵌入窗口时显示的占位内容
-                    ColumnLayout {
-                        anchors.centerIn: parent
-                        visible: !tabData.data || tabData.data.status !== "运行中"
-                        spacing: 20
+                    // ColumnLayout {
+                    // anchors.centerIn: parent
+                    // visible: !tabData.data || tabData.data.status !== "运行中"
+                    // spacing: 20
 
-                        Rectangle {
-                            Layout.alignment: Qt.AlignHCenter
-                            width: 64
-                            height: 64
-                            radius: 32
-                            color: "#2d2d30"
-                            border.color: "#3e3e42"
-                            border.width: 2
+                    // Rectangle {
+                    // Layout.alignment: Qt.AlignHCenter
+                    // width: 64
+                    // height: 64
+                    // radius: 32
+                    // color: "#2d2d30"
+                    // border.color: "#3e3e42"
+                    // border.width: 2
 
-                            Text {
-                                anchors.centerIn: parent
-                                text: "⚙"
-                                color: "#666666"
-                                font.pixelSize: 32
-                            }
-                        }
+                    // Text {
+                    // anchors.centerIn: parent
+                    // text: "⚙"
+                    // color: "#666666"
+                    // font.pixelSize: 32
+                    // }
+                    // }
 
-                        Text {
-                            Layout.alignment: Qt.AlignHCenter
-                            text: tabData.data && tabData.data.status === "运行中" ?
-                                      "正在加载进程窗口..." :
-                                      "进程未运行\n点击上方\"启动\"按钮启动进程"
-                            color: "#666666"
-                            font.pixelSize: 14
-                            horizontalAlignment: Text.AlignHCenter
-                        }
+                    // Text {
+                    //         Layout.alignment: Qt.AlignHCenter
+                    //         text: tabData.data && tabData.data.status === "运行中" ?
+                    //                   "正在加载进程窗口..." :
+                    //                   "进程未运行\n点击上方\"启动\"按钮启动进程"
+                    //         color: "#666666"
+                    //         font.pixelSize: 14
+                    //         horizontalAlignment: Text.AlignHCenter
+                    //     }
 
-                        Text {
-                            Layout.alignment: Qt.AlignHCenter
-                            text: tabData.data ? "进程: " + tabData.data.name : ""
-                            color: "#888888"
-                            font.pixelSize: 12
-                            visible: tabData.data
-                        }
-                    }
+                    //     Text {
+                    //         Layout.alignment: Qt.AlignHCenter
+                    //         text: tabData.data ? "进程: " + tabData.data.name : ""
+                    //         color: "#888888"
+                    //         font.pixelSize: 12
+                    //         visible: tabData.data
+                    //     }
+                    // }
                 }
             }
         }
