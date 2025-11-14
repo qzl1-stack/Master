@@ -692,6 +692,11 @@ Rectangle {
                 }
 
                 property var tabData: modelData || {}
+                onLoaded: {
+                    if (loader.item) {
+                        loader.item.loaderRef = loader.item; // 传自身引用，也可传 loader 但推荐传 loader.item
+                    }
+                }
             }
         }
     }
@@ -703,6 +708,7 @@ Rectangle {
         Rectangle {
             id: processDetailRoot // 为根组件添加ID以便于访问其内部元素
             property alias embeddedContainer: embeddedWindowContainer // 暴露内部的 embeddedWindowContainer
+            property var loaderRef: null    // 用于存储 Loader.item，即自身引用
             color: "#1e1e1e"
             border.color: "#3e3e42"
             border.width: 1
@@ -752,13 +758,11 @@ Rectangle {
                             onClicked: {
                                 if (tabData.data) {
                                     var processName = tabData.data.name; // 保存进程名称
+                                    var container = loaderRef ? loaderRef.embeddedContainer : null;
                                     startProcessById(processName)
-                                    // 启动后尝试嵌入窗口，进行多次重试
-                                    // 使用 Qt.callLater 确保容器完全初始化后再尝试嵌入
                                     Qt.callLater(function() {
-                                            var container = loader.item ? loader.item.embeddedContainer : null
                                             // 验证容器是否已关联到窗口
-                                            if (container && container.window) {
+                                            if (container) {
                                                 console.log("[QML] 开始嵌入窗口:", processName);
                                                 startEmbeddingTask(processName, container);
                                             } else {
@@ -797,21 +801,21 @@ Rectangle {
                 }
 
                 // 嵌入窗口容器
-Rectangle {
-    id: embeddedWindowContainer
-    Layout.fillWidth: true
-    Layout.fillHeight: true
-    color: "#000000"
-    border.color: "#3e3e42"
-    border.width: 1
+                Rectangle {
+                    id: embeddedWindowContainer
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    color: "#000000"
+                    border.color: "#3e3e42"
+                    border.width: 1
 
-    property var windowId: 0
-    property bool isReady: false // 标记容器是否已准备好
+                    property var windowId: 0
+                    property bool isReady: false // 标记容器是否已准备好
 
-    Component.onCompleted: {
-        console.log("[QML] embeddedWindowContainer Component.onCompleted");
-        // 不再需要延迟函数，因为 onWindowChanged 会处理
-    }
+                    Component.onCompleted: {
+                        console.log("[QML] embeddedWindowContainer Component.onCompleted");
+                        // 不再需要延迟函数，因为 onWindowChanged 会处理
+                    }
 
                     // 当没有嵌入窗口时显示的占位内容
                     // ColumnLayout {
@@ -1935,7 +1939,7 @@ Rectangle {
         }
     }
 
-    function startEmbeddingTask(processName, containerItem) { // 移除 containerWindowId
+    function startEmbeddingTask(processName, containerItem) { 
         if (!mainController) {
             console.warn("[QML] mainController 未定义，无法启动嵌入任务。");
             return;
