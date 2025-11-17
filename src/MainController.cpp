@@ -15,6 +15,10 @@
 #include <QJsonArray>
 #include <QtConcurrent/QtConcurrent>
 
+#ifdef Q_OS_WIN
+#include <windows.h>
+#endif
+
 
 // 静态成员初始化
 std::unique_ptr<MainController> MainController::instance_ = nullptr;
@@ -524,37 +528,6 @@ QVariantList MainController::GetConfiguredProcessNames() const
 
 // ==================== 窗口嵌入相关方法实现 ====================
 
-qulonglong MainController::GetContainerWindowId(QObject* qmlItem)
-{
-    if (!qmlItem) {
-        qWarning() << "[MainController] GetContainerWindowId: qmlItem 为空";
-        return 0;
-    }
-    
-    // 尝试从QQuickItem获取窗口
-    QQuickItem* quickItem = qobject_cast<QQuickItem*>(qmlItem);
-    if (!quickItem) {
-        qWarning() << "[MainController] GetContainerWindowId: 无法转换为QQuickItem";
-        return 0;
-    }
-    
-    QQuickWindow* quickWindow = quickItem->window();
-    if (!quickWindow) {
-        qWarning() << "[MainController] GetContainerWindowId: 无法获取QQuickWindow";
-        return 0;
-    }
-    
-    QWindow* window = qobject_cast<QWindow*>(quickWindow);
-    if (!window) {
-        qWarning() << "[MainController] GetContainerWindowId: 无法获取窗口";
-        return 0;
-    }
-    
-    qulonglong winId = window->winId();
-    qInfo() << "[MainController] 获取容器窗口ID:" << winId;
-    return winId;
-}
-
 bool MainController::EmbedProcessWindow(const QString& process_id, QObject* container_item)
 {
     if (!container_item) {
@@ -576,11 +549,17 @@ bool MainController::EmbedProcessWindow(const QString& process_id, QObject* cont
 
     const qulonglong container_window_id = window->winId();
     const qreal dpr = window->devicePixelRatio();
-    const QPointF scene_pos = item->mapToScene(QPointF(0, 0));
-    const QRect geometry(qRound(scene_pos.x() * dpr),
-                        qRound(scene_pos.y() * dpr),
+    
+    // 修正：使用 mapToItem(nullptr, ...) 获取相对于顶层窗口的坐标
+    const QPointF window_pos = item->mapToItem(nullptr, QPointF(0, 0));
+    const QRect geometry(qRound(window_pos.x() * dpr),
+                        qRound(window_pos.y() * dpr),
                         qRound(item->width() * dpr),
                         qRound(item->height() * dpr));
+
+    qDebug() << "[MainController] 容器几何信息 - 位置:(" << window_pos.x() << "," << window_pos.y() 
+             << ") 尺寸:(" << item->width() << "x" << item->height() 
+             << ") DPR:" << dpr << " 最终几何:" << geometry;
 
     if (process_id.isEmpty() || container_window_id == 0) {
         qWarning() << "[MainController] EmbedProcessWindow: 参数无效 - process_id:" 
@@ -622,12 +601,69 @@ bool MainController::EmbedProcessWindow(const QString& process_id, QObject* cont
     
     if (success) {
         qInfo() << "[MainController] 成功嵌入进程窗口:" << process_id 
-                << "到容器:" << container_window_id;
+                << "到容器:" << container_window_id << "几何:" << geometry;
     } else {
         qWarning() << "[MainController] 嵌入进程窗口失败:" << process_id;
     }
     
     return success;
+}
+
+bool MainController::UpdateEmbeddedWindowGeometry(const QString& process_id, QObject* container_item)
+{
+    if (!container_item) {
+        qWarning() << "[MainController] UpdateEmbeddedWindowGeometry: 容器项无效";
+        return false;
+    }
+
+    QQuickItem* item = qobject_cast<QQuickItem*>(container_item);
+    if (!item) {
+        qWarning() << "[MainController] UpdateEmbeddedWindowGeometry: 无法将 QObject 转换为 QQuickItem";
+        return false;
+    }
+
+    QQuickWindow* window = item->window();
+    if (!window) {
+        qWarning() << "[MainController] UpdateEmbeddedWindowGeometry: 无法从容器项获取 QQuickWindow";
+        return false;
+    }
+
+    const qreal dpr = window->devicePixelRatio();
+    const QPointF window_pos = item->mapToItem(nullptr, QPointF(0, 0));
+    const QRect geometry(qRound(window_pos.x() * dpr),
+                        qRound(window_pos.y() * dpr),
+                        qRound(item->width() * dpr),
+                        qRound(item->height() * dpr));
+
+    // 查找子进程的主窗口
+    qulonglong child_window_handle = FindProcessMainWindow(process_id);
+    if (child_window_handle == 0) {
+        qWarning() << "[MainController] UpdateEmbeddedWindowGeometry: 无法找到进程窗口:" << process_id;
+        return false;
+    }
+
+#ifdef Q_OS_WIN
+    HWND childHwnd = reinterpret_cast<HWND>(child_window_handle);
+    
+    // 更新窗口位置和尺寸
+    BOOL result = SetWindowPos(childHwnd, nullptr, 
+                               geometry.x(), geometry.y(),
+                               geometry.width(), geometry.height(),
+                               SWP_NOZORDER | SWP_NOACTIVATE);
+    
+    if (!result) {
+        DWORD error = GetLastError();
+        qWarning() << "[MainController] UpdateEmbeddedWindowGeometry: SetWindowPos 失败，错误码:" << error;
+        return false;
+    }
+    
+    qDebug() << "[MainController] 更新嵌入窗口几何:" << process_id << "新几何:" << geometry;
+    return true;
+#else
+    Q_UNUSED(child_window_handle)
+    qWarning() << "[MainController] 当前平台不支持更新嵌入窗口几何";
+    return false;
+#endif
 }
 
 void MainController::startEmbeddingProcess(const QString& process_name)
@@ -646,51 +682,6 @@ void MainController::finishEmbeddingProcess(const QString& process_name)
     embedding_cancelled_.remove(process_name);
 }
 
-void MainController::cancelEmbedProcessWindow(const QString& process_name)
-{
-    QMutexLocker locker(&embedding_mutex_);
-    if (embedding_in_progress_.value(process_name, false)) {
-        qDebug() << "[MainController] 请求取消窗口嵌入操作:" << process_name;
-        embedding_cancelled_[process_name] = true;
-    }
-}
-
-bool MainController::isEmbeddingInProgress(const QString& process_name) const
-{
-    QMutexLocker locker(&embedding_mutex_);
-    return embedding_in_progress_.value(process_name, false);
-}
-
-bool MainController::isEmbedCancelled(const QString& process_name) const
-{
-    QMutexLocker locker(&embedding_mutex_);
-    return embedding_cancelled_.value(process_name, false);
-}
-
-void MainController::clearEmbedCancelFlag(const QString& process_name)
-{
-    QMutexLocker locker(&embedding_mutex_);
-    embedding_cancelled_.remove(process_name);
-}
-
-bool MainController::UnembedProcessWindow(const QString& process_id)
-{
-    if (process_id.isEmpty()) {
-        qWarning() << "[MainController] UnembedProcessWindow: process_id 为空";
-        return false;
-    }
-    
-    // 实现取消嵌入逻辑
-    bool success = UnembedProcessWindowImpl(process_id);
-    
-    if (success) {
-        qInfo() << "[MainController] 成功取消嵌入进程窗口:" << process_id;
-    } else {
-        qWarning() << "[MainController] 取消嵌入进程窗口失败:" << process_id;
-    }
-    
-    return success;
-}
 
 /**
  * @brief 发送命令到指定进程并等待响应
@@ -1655,7 +1646,6 @@ void MainController::HandleCommandResponseMessage(const IpcMessage& message)
 // ==================== 窗口嵌入私有实现方法 ====================
 
 #ifdef Q_OS_WIN
-#include <windows.h>
 #include <tlhelp32.h>
 
 // Windows特定的窗口枚举结构
@@ -1674,12 +1664,6 @@ BOOL CALLBACK EnumWindowsProc(HWND hwnd, LPARAM lParam) {
     GetWindowTextA(hwnd, windowTitle, sizeof(windowTitle));
     BOOL visible = IsWindowVisible(hwnd);
 
-    qDebug() << "[MainController] EnumWindowProc - 枚举窗口: HWND=" << reinterpret_cast<qulonglong>(hwnd)
-             << " Title=\"" << windowTitle << "\""
-             << " Visible=" << visible
-             << " WindowPID=" << windowProcessId
-             << " (目标TargetPID=" << data->processId << ")"; // 增加目标PID，方便对比
-
     if (windowProcessId == data->processId) {
         if (visible) {
             data->foundWindow = hwnd;
@@ -1689,7 +1673,7 @@ BOOL CALLBACK EnumWindowsProc(HWND hwnd, LPARAM lParam) {
     return TRUE;
 }
 
-qulonglong MainController::FindProcessMainWindow(const QString& process_id)
+qulonglong MainController::FindProcessMainWindow(const QString& process_id, int max_retries, int retry_delay_ms)
 {
     if (!process_manager_) {
         qWarning() << "[MainController] FindProcessMainWindow: ProcessManager 未初始化";
@@ -1708,18 +1692,33 @@ qulonglong MainController::FindProcessMainWindow(const QString& process_id)
     }
     
     // 明确指示正在查找的PID
-    qDebug() << "[MainController] FindProcessMainWindow: 正在查找进程\"" << process_id << "\" (目标PID:" << target_pid << ") 的主窗口...";
+    qDebug() << "[MainController] FindProcessMainWindow: 正在查找进程\"" << process_id 
+             << "\" (目标PID:" << target_pid << ") 的主窗口，最大重试次数:" << max_retries;
 
-    WindowSearchData searchData = {static_cast<DWORD>(target_pid), nullptr};
-    EnumWindows(EnumWindowsProc, reinterpret_cast<LPARAM>(&searchData));
-    
-    if (searchData.foundWindow) {
-        qInfo() << "[MainController] 成功找到进程\"" << process_id 
-                << "\"的主窗口。PID:" << target_pid << " HWND:" << reinterpret_cast<qulonglong>(searchData.foundWindow);
-        return reinterpret_cast<qulonglong>(searchData.foundWindow);
+    // 重试逻辑
+    for (int attempt = 0; attempt < max_retries; ++attempt) {
+        WindowSearchData searchData = {static_cast<DWORD>(target_pid), nullptr};
+        EnumWindows(EnumWindowsProc, reinterpret_cast<LPARAM>(&searchData));
+        
+        if (searchData.foundWindow) {
+            qInfo() << "[MainController] 成功找到进程\"" << process_id 
+                    << "\"的主窗口。PID:" << target_pid 
+                    << " HWND:" << reinterpret_cast<qulonglong>(searchData.foundWindow)
+                    << " (尝试次数:" << (attempt + 1) << ")";
+            return reinterpret_cast<qulonglong>(searchData.foundWindow);
+        }
+        
+        // 如果不是最后一次尝试，等待后重试
+        if (attempt < max_retries - 1) {
+            qDebug() << "[MainController] 未找到进程\"" << process_id 
+                     << "\"的主窗口，等待" << retry_delay_ms << "ms后重试... (尝试" 
+                     << (attempt + 1) << "/" << max_retries << ")";
+            QThread::msleep(retry_delay_ms);
+        }
     }
     
-    qWarning() << "[MainController] 未找到进程\"" << process_id << "\" (目标PID:" << target_pid << ") 的主窗口。";
+    qWarning() << "[MainController] 经过" << max_retries << "次尝试后，仍未找到进程\"" 
+               << process_id << "\" (目标PID:" << target_pid << ") 的主窗口。";
     return 0;
 }
 
@@ -1747,13 +1746,18 @@ bool MainController::EmbedProcessWindowImpl(const QString& process_id, qulonglon
     // 调整窗口样式，移除标题栏和边框
     LONG style = GetWindowLong(childHwnd, GWL_STYLE);
     style &= ~(WS_CAPTION | WS_THICKFRAME | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_SYSMENU);
-    style |= WS_CHILD;
+    style |= WS_CHILD | WS_VISIBLE;
     SetWindowLong(childHwnd, GWL_STYLE, style);
     
-    // 调整子窗口大小和位置以匹配QML项
-    SetWindowPos(childHwnd, HWND_TOP, geometry.x(), geometry.y(),
+    // 移除扩展样式中可能导致窗口置顶的标志
+    LONG exStyle = GetWindowLong(childHwnd, GWL_EXSTYLE);
+    exStyle &= ~(WS_EX_TOPMOST | WS_EX_TOOLWINDOW);
+    SetWindowLong(childHwnd, GWL_EXSTYLE, exStyle);
+    
+    // 调整子窗口大小和位置以匹配QML项，不改变Z-order
+    SetWindowPos(childHwnd, nullptr, geometry.x(), geometry.y(),
                  geometry.width(), geometry.height(),
-                 SWP_SHOWWINDOW);
+                 SWP_NOZORDER | SWP_SHOWWINDOW | SWP_NOACTIVATE);
     
     qInfo() << "[MainController] 成功嵌入窗口:" << process_id 
             << "子窗口:" << child_window_handle 
@@ -1762,37 +1766,13 @@ bool MainController::EmbedProcessWindowImpl(const QString& process_id, qulonglon
     return true;
 }
 
-bool MainController::UnembedProcessWindowImpl(const QString& process_id)
-{
-    // 查找子进程的主窗口
-    qulonglong child_window_handle = FindProcessMainWindow(process_id);
-    if (child_window_handle == 0) {
-        qWarning() << "[MainController] 无法找到进程窗口:" << process_id;
-        return false;
-    }
-    
-    HWND childHwnd = reinterpret_cast<HWND>(child_window_handle);
-    
-    // 恢复窗口的原始父窗口（桌面）
-    SetParent(childHwnd, nullptr);
-    
-    // 恢复窗口样式
-    LONG style = GetWindowLong(childHwnd, GWL_STYLE);
-    style &= ~WS_CHILD;
-    style |= (WS_CAPTION | WS_THICKFRAME | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_SYSMENU);
-    SetWindowLong(childHwnd, GWL_STYLE, style);
-    
-    // 重新显示窗口
-    ShowWindow(childHwnd, SW_SHOW);
-    
-    qInfo() << "[MainController] 成功取消嵌入窗口:" << process_id;
-    return true;
-}
 
 #else
 // 非Windows平台的实现（Linux/macOS）
-qulonglong MainController::FindProcessMainWindow(const QString& process_id)
+qulonglong MainController::FindProcessMainWindow(const QString& process_id, int max_retries, int retry_delay_ms)
 {
+    Q_UNUSED(max_retries)
+    Q_UNUSED(retry_delay_ms)
     // TODO: 实现Linux/macOS的窗口查找逻辑
     qWarning() << "[MainController] 当前平台不支持窗口嵌入功能";
     return 0;
@@ -1804,14 +1784,6 @@ bool MainController::EmbedProcessWindowImpl(const QString& process_id, qulonglon
     Q_UNUSED(process_id)
     Q_UNUSED(container_window_id)
     Q_UNUSED(geometry)
-    qWarning() << "[MainController] 当前平台不支持窗口嵌入功能";
-    return false;
-}
-
-bool MainController::UnembedProcessWindowImpl(const QString& process_id)
-{
-    // TODO: 实现Linux/macOS的取消嵌入逻辑
-    Q_UNUSED(process_id)
     qWarning() << "[MainController] 当前平台不支持窗口嵌入功能";
     return false;
 }

@@ -350,8 +350,8 @@ QJsonObject ProjectConfig::createDefaultConfig()
     
     // 子进程列表
     QJsonArray defaultProcessList;
-    defaultProcessList.append("sftp_agent");
-    defaultProcessList.append("log_agent");
+    defaultProcessList.append("文件传输");
+    defaultProcessList.append("AGV分析");
     defaultConfig["process_list"] = defaultProcessList;
 
     // 子进程配置
@@ -359,13 +359,13 @@ QJsonObject ProjectConfig::createDefaultConfig()
     QJsonObject sftpAgentConfig;
     sftpAgentConfig["executable"] = "sftp_agent.exe"; // 假设子进程的可执行文件
     sftpAgentConfig["arguments"] = QJsonArray(); // 空参数
-    processesConfig["sftp_agent"] = sftpAgentConfig;
+    processesConfig["文件传输"] = sftpAgentConfig;
 
     QJsonObject logAgentConfig;
     QString logAgentExecutable = QCoreApplication::applicationDirPath() + "/appLog_analyzer.exe";
     logAgentConfig["executable"] = logAgentExecutable; // 假设log_agent的可执行文件
     logAgentConfig["arguments"] = QJsonArray(); // 空参数
-    processesConfig["log_agent"] = logAgentConfig;
+    processesConfig["AGV分析"] = logAgentConfig;
     defaultConfig["processes"] = processesConfig;
 
     // 工作目录

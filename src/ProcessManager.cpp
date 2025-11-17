@@ -529,22 +529,6 @@ void ProcessManager::HandleProcessError(QProcess::ProcessError error)
     UpdateProcessStatus(process_id, kError);
     emit ProcessCrashed(process_id, error_string);
     
-    // 对于启动失败的进程，尝试自动重启
-    // if (error == QProcess::FailedToStart || error == QProcess::Crashed) {
-    //     QMutexLocker locker(&process_mutex_);
-    //     auto it = process_info_map_.find(process_id);
-    //     if (it != process_info_map_.end()) {
-    //         ProcessInfo& info = it.value();
-    //         if (info.auto_restart && info.restart_count < info.max_restart_count) {
-    //             qDebug() << "[ProcessManager] 准备自动重启错误的进程:" << process_id;
-    //             locker.unlock();
-    //             // 延迟1秒重启
-    //             QTimer::singleShot(1000, this, [this, process_id]() {
-    //                 ExecuteAutoRestart(process_id);
-    //             });
-    //         }
-    //     }
-    // }
 }
 
 void ProcessManager::HandleProcessStandardOutput()

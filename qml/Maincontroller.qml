@@ -494,6 +494,7 @@ Rectangle {
     property var openTabs: [] // 打开的标签页列表
     property int currentTabIndex: -1 // 当前选中的标签页索引
     property var logMessages: [] // 日志消息列表
+    property string pendingEmbedProcess: "" // 待嵌入的进程名
 
     // 侧边栏进程列表项委托
     Component {
@@ -511,9 +512,14 @@ Rectangle {
                 hoverEnabled: true
                 onClicked: {
                     sidebarProcessListView.currentIndex = index
-
-                    // 打开详情标签页
+                    var processName = modelData.name
+                    
+                    // 打开详情标签页（会在 openProcessTab 中设置 pendingEmbedProcess）
                     openProcessTab(modelData)
+                    
+                    // 立即启动进程（无需等待按钮点击）
+                    console.log("[QML] 侧边栏点击，立即启动进程:", processName)
+                    startProcessById(processName)
                 }
             }
 
@@ -695,6 +701,8 @@ Rectangle {
                 onLoaded: {
                     if (loader.item) {
                         loader.item.loaderRef = loader.item; // 传自身引用，也可传 loader 但推荐传 loader.item
+                        // 传递 startEmbeddingTask 函数引用，以便在 processDetailComponent 中使用
+                        loader.item.startEmbeddingTaskRef = startEmbeddingTask
                     }
                 }
             }
@@ -707,8 +715,9 @@ Rectangle {
         id: processDetailComponent
         Rectangle {
             id: processDetailRoot // 为根组件添加ID以便于访问其内部元素
-            property alias embeddedContainer: embeddedWindowContainer // 暴露内部的 embeddedWindowContainer
-            property var loaderRef: null    // 用于存储 Loader.item，即自身引用
+            property var loaderRef: null    // 用于存储 Loader.item，即自身引用（当前仅兼容保留）
+            property string processName: ""  // 当前详情页对应的进程名
+            property var startEmbeddingTaskRef: null // 从外部传入的 startEmbeddingTask 函数引用
             color: "#1e1e1e"
             border.color: "#3e3e42"
             border.width: 1
@@ -716,90 +725,7 @@ Rectangle {
             ColumnLayout {
                 anchors.fill: parent
                 spacing: 0
-
-                // 顶部工具栏
-                Rectangle {
-                    Layout.fillWidth: true
-                    Layout.preferredHeight: 40
-                    color: "#2d2d30"
-                    border.color: "#3e3e42"
-                    border.width: 1
-
-                    RowLayout {
-                        anchors.fill: parent
-                        anchors.margins: 8
-                        spacing: 10
-
-                        Text {
-                            text: tabData.data ? tabData.data.name : "未知进程"
-                            color: "#cccccc"
-                            font.pixelSize: 12
-                            font.bold: true
-                        }
-
-                        Item { Layout.fillWidth: true } // 弹性空间
-
-                        Button {
-                            text: "启动"
-                            Layout.preferredWidth: 50
-                            Layout.preferredHeight: 24
-                            enabled: systemStarted && tabData.data && tabData.data.status !== "运行中"
-                            background: Rectangle {
-                                color: parent.enabled ? (parent.hovered ? "#4CAF50" : "#388E3C") : "#555555"
-                                radius: 3
-                            }
-                            contentItem: Text {
-                                text: parent.text
-                                color: parent.enabled ? "white" : "#999999"
-                                font.pixelSize: 10
-                                horizontalAlignment: Text.AlignHCenter
-                                verticalAlignment: Text.AlignVCenter
-                            }
-                            onClicked: {
-                                if (tabData.data) {
-                                    var processName = tabData.data.name; // 保存进程名称
-                                    var container = loaderRef ? loaderRef.embeddedContainer : null;
-                                    startProcessById(processName)
-                                    Qt.callLater(function() {
-                                            // 验证容器是否已关联到窗口
-                                            if (container) {
-                                                console.log("[QML] 开始嵌入窗口:", processName);
-                                                startEmbeddingTask(processName, container);
-                                            } else {
-                                                console.warn("[QML] 容器尚未关联到窗口，将在窗口准备好后重试:", processName);
-                                                // 等待窗口准备就绪后再尝试
-                                                waitForContainerAndEmbed(processName, container);
-                                            }
-                                    });
-                                }
-                            }
-                        }
-
-                        Button {
-                            text: "停止"
-                            Layout.preferredWidth: 50
-                            Layout.preferredHeight: 24
-                            enabled: systemStarted && tabData.data && tabData.data.status === "运行中"
-                            background: Rectangle {
-                                color: parent.enabled ? (parent.hovered ? "#f44336" : "#d32f2f") : "#555555"
-                                radius: 3
-                            }
-                            contentItem: Text {
-                                text: parent.text
-                                color: parent.enabled ? "white" : "#999999"
-                                font.pixelSize: 10
-                                horizontalAlignment: Text.AlignHCenter
-                                verticalAlignment: Text.AlignVCenter
-                            }
-                            onClicked: {
-                                if (tabData.data) {
-                                    stopProcessById(tabData.data.name)
-                                }
-                            }
-                        }
-                    }
-                }
-
+                
                 // 嵌入窗口容器
                 Rectangle {
                     id: embeddedWindowContainer
@@ -810,54 +736,98 @@ Rectangle {
                     border.width: 1
 
                     property var windowId: 0
-                    property bool isReady: false // 标记容器是否已准备好
+                    property bool hasTriggeredEmbed: false // 标记是否已触发嵌入，避免重复触发
 
-                    Component.onCompleted: {
-                        console.log("[QML] embeddedWindowContainer Component.onCompleted");
-                        // 不再需要延迟函数，因为 onWindowChanged 会处理
+                    // 防抖定时器，避免频繁更新窗口几何
+                    Timer {
+                        id: geometryUpdateTimer
+                        interval: 100  // 100ms 防抖延迟
+                        repeat: false
+                        onTriggered: {
+                            var processName = tabData.data ? tabData.data.name : ""
+                            if (processName && mainController) {
+                                mainController.UpdateEmbeddedWindowGeometry(processName, embeddedWindowContainer)
+                            }
+                        }
                     }
 
-                    // 当没有嵌入窗口时显示的占位内容
-                    // ColumnLayout {
-                    // anchors.centerIn: parent
-                    // visible: !tabData.data || tabData.data.status !== "运行中"
-                    // spacing: 20
+                    Component.onCompleted: {
+                        console.log("[QML] embeddedWindowContainer Component.onCompleted，容器尺寸:", width, "x", height)
+                        // 嵌入逻辑将在 onWidthChanged 和 onHeightChanged 中触发
+                    }
 
-                    // Rectangle {
-                    // Layout.alignment: Qt.AlignHCenter
-                    // width: 64
-                    // height: 64
-                    // radius: 32
-                    // color: "#2d2d30"
-                    // border.color: "#3e3e42"
-                    // border.width: 2
+                    // 监听宽度变化，当宽高都 > 0 时触发嵌入或更新
+                    onWidthChanged: {
+                        if (hasTriggeredEmbed) {
+                            // 如果已经嵌入，则更新窗口几何
+                            updateEmbeddedWindowGeometry()
+                        } else {
+                            // 否则尝试嵌入
+                            tryAutoEmbed()
+                        }
+                    }
 
-                    // Text {
-                    // anchors.centerIn: parent
-                    // text: "⚙"
-                    // color: "#666666"
-                    // font.pixelSize: 32
-                    // }
-                    // }
+                    // 监听高度变化，当宽高都 > 0 时触发嵌入或更新
+                    onHeightChanged: {
+                        if (hasTriggeredEmbed) {
+                            // 如果已经嵌入，则更新窗口几何
+                            updateEmbeddedWindowGeometry()
+                        } else {
+                            // 否则尝试嵌入
+                            tryAutoEmbed()
+                        }
+                    }
 
-                    // Text {
-                    //         Layout.alignment: Qt.AlignHCenter
-                    //         text: tabData.data && tabData.data.status === "运行中" ?
-                    //                   "正在加载进程窗口..." :
-                    //                   "进程未运行\n点击上方\"启动\"按钮启动进程"
-                    //         color: "#666666"
-                    //         font.pixelSize: 14
-                    //         horizontalAlignment: Text.AlignHCenter
-                    //     }
+                    // 自动嵌入函数
+                    function tryAutoEmbed() {
+                        // 如果已经触发过嵌入，则不再触发
+                        if (hasTriggeredEmbed) {
+                            return
+                        }
 
-                    //     Text {
-                    //         Layout.alignment: Qt.AlignHCenter
-                    //         text: tabData.data ? "进程: " + tabData.data.name : ""
-                    //         color: "#888888"
-                    //         font.pixelSize: 12
-                    //         visible: tabData.data
-                    //     }
-                    // }
+                        // 如果容器尺寸仍为 0，不执行嵌入
+                        if (width <= 0 || height <= 0) {
+                            console.debug("[QML] 容器尺寸无效，等待布局完成，当前尺寸:", width, "x", height)
+                            return
+                        }
+
+                        // 获取进程名
+                        var processName = tabData.data ? tabData.data.name : ""
+                        if (!processName) {
+                            console.warn("[QML] 无有效进程名，暂不嵌入")
+                            return
+                        }
+
+                        // 验证函数引用
+                        if (!processDetailRoot.startEmbeddingTaskRef || 
+                            typeof processDetailRoot.startEmbeddingTaskRef !== "function") {
+                            console.error("[QML] startEmbeddingTaskRef 无效，无法嵌入")
+                            return
+                        }
+
+                        // 标记已触发，避免重复调用
+                        hasTriggeredEmbed = true
+
+                        console.log("[QML] 容器尺寸有效，自动开始嵌入:", processName, "容器尺寸:", width, "x", height)
+                        processDetailRoot.startEmbeddingTaskRef(processName, embeddedWindowContainer)
+                    }
+                    
+                    // 更新嵌入窗口几何的函数（使用防抖）
+                    function updateEmbeddedWindowGeometry() {
+                        // 只在有效尺寸时更新
+                        if (width <= 0 || height <= 0) {
+                            return
+                        }
+                        
+                        // 获取进程名
+                        var processName = tabData.data ? tabData.data.name : ""
+                        if (!processName) {
+                            return
+                        }
+                        
+                        // 重启定时器，实现防抖效果
+                        geometryUpdateTimer.restart()
+                    }
                 }
             }
         }
@@ -1368,9 +1338,9 @@ Rectangle {
                     // 如果是新进程，极少见。这里可以根据需求选择是否添加
                     // 如果这里添加了新进程，那么 processIndexMap 也需要更新
                     processStatusList.push({
-                                               name: key,
-                                               status: mapProcessStatus(processData.status)
-                                           });
+                    name: key,
+                    status: mapProcessStatus(processData.status)
+                    });
                 }
             }
         }
@@ -1505,6 +1475,10 @@ Rectangle {
             openTabs = openTabs.slice() // 触发属性更新
             currentTabIndex = openTabs.length - 1
         }
+
+        // 记录需要嵌入的进程，供容器初始化后使用
+        pendingEmbedProcess = processData.name || ""
+        console.log("[QML] openProcessTab 设置待嵌入进程:", pendingEmbedProcess)
 
         appendLog("打开进程详情: " + (processData.name || "未知进程"))
     }
@@ -1913,32 +1887,6 @@ Rectangle {
 
     // ==================== 窗口嵌入辅助函数 ====================
 
-    /**
-     * @brief 等待容器准备就绪后再嵌入
-     */
-    function waitForContainerAndEmbed(processName, containerItem, maxWaitRetries, waitDelayMs) {
-        if (!maxWaitRetries) maxWaitRetries = 10;
-        if (!waitDelayMs) waitDelayMs = 100;
-        
-        if (maxWaitRetries <= 0) {
-            console.error("[QML] 等待容器准备超时，放弃嵌入:", processName);
-            return;
-        }
-        
-        if (containerItem && containerItem.window) {
-            console.log("[QML] 容器已准备好，开始嵌入:", processName);
-            startEmbeddingTask(processName, containerItem);
-        } else {
-            console.debug("[QML] 等待容器准备就绪...剩余等待次数:", maxWaitRetries - 1);
-            var timer = Qt.createQmlObject('import QtQuick 2.0; Timer { interval: ' + waitDelayMs + '; repeat: false; onTriggered: {} }', mainControllerRoot, "WaitTimer");
-            timer.onTriggered.connect(function() {
-                waitForContainerAndEmbed(processName, containerItem, maxWaitRetries - 1, waitDelayMs);
-                timer.destroy();
-            });
-            timer.start();
-        }
-    }
-
     function startEmbeddingTask(processName, containerItem) { 
         if (!mainController) {
             console.warn("[QML] mainController 未定义，无法启动嵌入任务。");
@@ -1951,35 +1899,16 @@ Rectangle {
             return;
         }
         
-        // 验证容器是否已关联到窗口
-        if (!containerItem.window) {
-            console.error("[QML] containerItem 尚未关联到窗口，无法启动嵌入任务:", processName);
-            return;
-        }
-        
-        console.log("[QML] 验证容器项有效性 - 容器:", containerItem, "窗口:", containerItem.window, "窗口ID:", containerItem.window ? containerItem.winId : "无效");
+        console.log("[QML] 验证容器项有效性 - 容器:", containerItem,
+                    "宽高:", containerItem.width, "x", containerItem.height);
         
         // 立即设置"嵌入中"状态，以确保 onDestruction 能够正确取消
         mainController.startEmbeddingProcess(processName);
-        // 开始重试逻辑
-        tryEmbedProcessWindow(processName, containerItem, 6, 500); // 移除 containerWindowId
+        
+        tryEmbedProcessWindow(processName, containerItem);
     }
 
-    // tryEmbedProcessWindow 是一个辅助函数，用于多次尝试嵌入子进程窗口。
-    // 它包含所有重试和状态检查逻辑，并在所有最终状态（成功、失败、取消）下调用 finishEmbeddingProcess。
-    function tryEmbedProcessWindow(processName, containerItem, maxRetries, delayMs) { 
-
-        // if (mainController.isEmbedCancelled(processName)) {
-        //     console.log("[QML] 嵌入操作已取消:", processName);
-        //     mainController.finishEmbeddingProcess(processName);
-        //     return;
-        // }
-
-        if (maxRetries <= 0) {
-            console.warn("[QML] 嵌入窗口重试次数已用尽，放弃嵌入:", processName);
-            mainController.finishEmbeddingProcess(processName);
-            return;
-        }
+    function tryEmbedProcessWindow(processName, containerItem) { 
 
         // 验证容器项在每次重试时仍然有效
         if (!containerItem) {
@@ -1987,26 +1916,12 @@ Rectangle {
             mainController.finishEmbeddingProcess(processName);
             return;
         }
-        
-        // 验证容器是否仍然关联到窗口
-        if (!containerItem.window) {
-            console.warn("[QML] 容器在重试时未关联到窗口，等待后再试:", processName, "剩余重试:", maxRetries);
-            // 等待一小段时间后重试
-            var waitTimer = Qt.createQmlObject('import QtQuick 2.0; Timer { interval: ' + delayMs + '; repeat: false; onTriggered: {} }', mainControllerRoot, "WaitRetryTimer");
-            waitTimer.onTriggered.connect(function() {
-                tryEmbedProcessWindow(processName, containerItem, maxRetries - 1, delayMs);
-                waitTimer.destroy();
-            });
-            waitTimer.start();
-            return;
-        }
 
-        console.debug("[QML] 尝试嵌入窗口:", processName, "到容器:", containerItem.objectName || "未命名", "剩余重试:", maxRetries);
+        console.debug("[QML] 尝试嵌入窗口:", processName, "到容器:", containerItem.objectName || "未命名");
 
         // 使用 Qt.callLater 确保在 Qt 事件循环中执行，并避免阻塞UI
         Qt.callLater(function() {
-            // 再次验证容器有效性（在回调中）
-            if (!containerItem || !containerItem.window) {
+            if (!containerItem) {
                 console.warn("[QML] 容器在回调中变为无效，停止重试:", processName);
                 mainController.finishEmbeddingProcess(processName);
                 return;
@@ -2016,15 +1931,7 @@ Rectangle {
             if (success) {
                 console.info("[QML] 成功嵌入窗口:", processName);
                 mainController.finishEmbeddingProcess(processName);
-            } else {
-                // 创建一个短暂的定时器，在延迟后再次尝试
-                var timer = Qt.createQmlObject('import QtQuick 2.0; Timer { interval: ' + delayMs + '; repeat: false; onTriggered: {} }', mainControllerRoot, "RetryTimer");
-                timer.onTriggered.connect(function() {
-                    tryEmbedProcessWindow(processName, containerItem, maxRetries - 1, delayMs);
-                    timer.destroy(); // 销毁定时器以释放资源
-                });
-                timer.start();
-            }
+            } 
         });
     }
 

@@ -252,65 +252,11 @@ public:
     
     // ==================== 窗口嵌入相关方法 ====================
     
-    /**
-     * @brief 获取QML容器的窗口ID
-     * @param qmlItem QML容器项
-     * @return 窗口ID，用于嵌入子进程窗口
-     */
-    Q_INVOKABLE qulonglong GetContainerWindowId(QObject* qmlItem);
-    
-    /**
-     * @brief 将子进程窗口嵌入到指定容器中
-     * @param process_id 进程ID
-     * @param container_window_id 容器窗口ID
-     * @return 是否成功嵌入
-     */
     Q_INVOKABLE bool EmbedProcessWindow(const QString& process_id, QObject* container_item);
-    
-    /**
-     * @brief 开始窗口嵌入重试过程
-     * @param process_name 进程名称
-     */
+    Q_INVOKABLE bool UpdateEmbeddedWindowGeometry(const QString& process_id, QObject* container_item);
     Q_INVOKABLE void startEmbeddingProcess(const QString& process_name);
-
-    /**
-     * @brief 结束窗口嵌入重试过程
-     * @param process_name 进程名称
-     */
     Q_INVOKABLE void finishEmbeddingProcess(const QString& process_name);
 
-    /**
-     * @brief 取消正在进行的窗口嵌入操作
-     * @param process_name 进程名称
-     */
-    Q_INVOKABLE void cancelEmbedProcessWindow(const QString& process_name);
-
-    /**
-     * @brief 检查指定进程的窗口嵌入是否正在进行中
-     * @param process_name 进程名称
-     * @return 如果正在嵌入则返回 true，否则返回 false
-     */
-    Q_INVOKABLE bool isEmbeddingInProgress(const QString& process_name) const;
-
-    /**
-     * @brief 检查指定进程的窗口嵌入是否已被取消
-     * @param process_name 进程名称
-     * @return 如果已取消则返回 true，否则返回 false
-     */
-    Q_INVOKABLE bool isEmbedCancelled(const QString& process_name) const;
-
-    /**
-     * @brief 清除指定进程的窗口嵌入取消标志
-     * @param process_name 进程名称
-     */
-    Q_INVOKABLE void clearEmbedCancelFlag(const QString& process_name);
-
-    /**
-     * @brief 取消嵌入子进程窗口
-     * @param process_id 进程ID
-     * @return 是否成功取消嵌入
-     */
-    Q_INVOKABLE bool UnembedProcessWindow(const QString& process_id);
     
     // ==================== 配置管理接口 ====================
     
@@ -555,18 +501,13 @@ private:
     bool EmbedProcessWindowImpl(const QString& process_id, qulonglong container_window_id, const QRect& geometry);
     
     /**
-     * @brief 平台特定的取消嵌入实现
+     * @brief 查找进程的主窗口句柄（带重试机制）
      * @param process_id 进程ID
-     * @return 是否成功取消嵌入
-     */
-    bool UnembedProcessWindowImpl(const QString& process_id);
-    
-    /**
-     * @brief 查找进程的主窗口句柄
-     * @param process_id 进程ID
+     * @param max_retries 最大重试次数，默认3次
+     * @param retry_delay_ms 每次重试的延迟时间（毫秒），默认200ms
      * @return 窗口句柄，失败返回0
      */
-    qulonglong FindProcessMainWindow(const QString& process_id);
+    qulonglong FindProcessMainWindow(const QString& process_id, int max_retries = 5, int retry_delay_ms = 200);
 
     /**
      * @brief 从配置中初始化IPC
