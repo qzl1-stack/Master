@@ -46,9 +46,9 @@ public:
 
 signals:
     // 检查完成信号
-    void UpdateCheckCompleted(bool has_update);
+    void updateCheckCompleted(bool has_update);
     // 检查失败信号  
-    void UpdateCheckFailed(const QString& error);
+    void updateCheckFailed(const QString& error);
     // 新版本发现信号
     void newVersionFound(const QString& version, const QString& notes, const QString& download_url, const QString& current_version);
 

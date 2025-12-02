@@ -263,28 +263,28 @@ Rectangle {
                 }
 
                 // 设置按钮
-                Rectangle {
-                    Layout.fillWidth: true
-                    Layout.preferredHeight: 40
-                    color: "#37373d"
+                // Rectangle {
+                //     Layout.fillWidth: true
+                //     Layout.preferredHeight: 40
+                //     color: "#37373d"
 
-                    Button {
-                        anchors.centerIn: parent
-                        text: "⚙️ 设置"
-                        background: Rectangle {
-                            color: "transparent"
-                        }
-                        contentItem: Text {
-                            text: parent.text
-                            color: "#cccccc"
-                            font.pixelSize: 14
-                        }
-                        onClicked: {
-                            // 在这里添加切换到设置页面的逻辑
-                            stackLayout.push("Settings.qml", { "mainController": mainController })
-                        }
-                    }
-                }
+                //     Button {
+                //         anchors.centerIn: parent
+                //         text: "⚙️ 设置"
+                //         background: Rectangle {
+                //             color: "transparent"
+                //         }
+                //         contentItem: Text {
+                //             text: parent.text
+                //             color: "#cccccc"
+                //             font.pixelSize: 14
+                //         }
+                //         onClicked: {
+                //             // 在这里添加切换到设置页面的逻辑
+                //             stackLayout.push("Settings.qml", { "mainController": mainController })
+                //         }
+                //     }
+                // }
             }
         }
 
@@ -506,18 +506,17 @@ Rectangle {
             color: parent.ListView.isCurrentItem ? "#094771" : (processMouseArea.containsMouse ? "#37373d" : "transparent")
             radius: 3
 
+
+
             MouseArea {
                 id: processMouseArea
                 anchors.fill: parent
                 hoverEnabled: true
                 onClicked: {
                     sidebarProcessListView.currentIndex = index
-                    var processName = modelData.name
-                    
-                    // 打开详情标签页（会在 openProcessTab 中设置 pendingEmbedProcess）
+                    var processName = modelData.name                   
                     openProcessTab(modelData)
                     
-                    // 立即启动进程（无需等待按钮点击）
                     console.log("[QML] 侧边栏点击，立即启动进程:", processName)
                     startProcessById(processName)
                 }
@@ -734,6 +733,7 @@ Rectangle {
                     color: "#000000"
                     border.color: "#3e3e42"
                     border.width: 1
+                    z: -1
 
                     property var windowId: 0
                     property bool hasTriggeredEmbed: false // 标记是否已触发嵌入，避免重复触发
@@ -1238,10 +1238,11 @@ Rectangle {
     function updateSystemStatus() {
         if (mainController && systemStarted) {
             // 更新进程状态
-            updateProcessList()
-
+            // updateProcessList()
+            var statusJson = mainController.GetAllProcessInfo();
+            parseProcessStatus(statusJson);
             // 更新IP列表
-            updateIpList()
+            // updateIpList()
 
             // 更新系统统计信息
             // 这里可以调用 mainController.GetSystemStatistics() 等方法
@@ -1282,20 +1283,17 @@ Rectangle {
     * @brief 更新进程列表和状态
     */
     function updateProcessList() {
-        if (!mainController) {
-            return;
-        }
         // 1. 保存当前选中项索引
-        var oldIndex = sidebarProcessListView.currentIndex;
+        // var oldIndex = sidebarProcessListView.currentIndex;
 
         // 2. 获取初始进程名称列表并设置为默认状态
         var configuredNames = mainController.GetConfiguredProcessNames();
         var initialProcesses = [];
         for (var i = 0; i < configuredNames.length; i++) {
             initialProcesses.push({
-                                      name: configuredNames[i],
-                                      status: "未运行" // 默认状态
-                                  });
+            name: configuredNames[i],
+            status: "未运行" // 默认状态
+          });
         }
         processStatusList = initialProcesses;
 
@@ -1307,25 +1305,27 @@ Rectangle {
             console.log("更新进程列表失败: " + e.message);
         }
 
-        // 4. 恢复选中项
-        if (oldIndex >= 0 && oldIndex < processStatusList.length) {
-            sidebarProcessListView.currentIndex = oldIndex;
-        } else if (processStatusList.length > 0) {
-            sidebarProcessListView.currentIndex = 0;
-        } else {
-            sidebarProcessListView.currentIndex = -1;
-        }
+        // // 4. 恢复选中项
+        // if (oldIndex >= 0 && oldIndex < processStatusList.length) {
+        //     sidebarProcessListView.currentIndex = oldIndex;
+        // } 
     }
 
     /**
     * @brief 解析进程状态 JSON
     */
     function parseProcessStatus(statusJson) {
+        // 保存当前选中索引
+        var savedIndex = sidebarProcessListView.currentIndex;
+        
         // 构建 name->index 映射表，只在需要时构建或更新
         var processIndexMap = {};
         for (var i = 0; i < processStatusList.length; i++) {
             processIndexMap[processStatusList[i].name] = i;
         }
+
+        // 标记是否有变化
+        var hasChanges = false;
 
         // 只更新已有对象的 status 字段
         for (var key in statusJson) {
@@ -1333,19 +1333,35 @@ Rectangle {
                 var processData = statusJson[key];
                 var idx = processIndexMap[key];
                 if (typeof idx === "number") {
-                    processStatusList[idx].status = mapProcessStatus(processData.status);
+                    var newStatus = mapProcessStatus(processData.status);
+                    // 只在状态真正改变时才更新
+                    if (processStatusList[idx].status !== newStatus) {
+                        processStatusList[idx].status = newStatus;
+                        hasChanges = true;
+                    }
                 } else {
                     // 如果是新进程，极少见。这里可以根据需求选择是否添加
-                    // 如果这里添加了新进程，那么 processIndexMap 也需要更新
                     processStatusList.push({
-                    name: key,
-                    status: mapProcessStatus(processData.status)
+                        name: key,
+                        status: mapProcessStatus(processData.status)
                     });
+                    hasChanges = true;
                 }
             }
         }
-        // 触发 UI 更新
-        processStatusList = processStatusList.slice();
+        
+        // 只在有变化时触发 UI 更新
+        if (hasChanges) {
+            processStatusList = processStatusList.slice();
+            
+            // 恢复之前的选中索引
+            if (savedIndex >= 0 && savedIndex < processStatusList.length) {
+                // 延迟恢复，确保 ListView 已完成重建
+                Qt.callLater(function() {
+                    sidebarProcessListView.currentIndex = savedIndex;
+                });
+            }
+        }
     }
 
     /**
@@ -1556,7 +1572,6 @@ Rectangle {
             var result = mainController.StartSubProcess(processName)
             if (result) {
                 appendLog("启动进程成功: " + processName)
-                updateProcessList()
                 // 更新打开的标签页中的进程数据
                 updateProcessTabsData()
             } else {
@@ -1583,23 +1598,6 @@ Rectangle {
         }
     }
 
-    /**
-    * @brief 重启指定进程
-    */
-    function restartProcessById(processName) {
-        if (mainController && processName) {
-            var result = mainController.RestartSubProcess(processName)
-            if (result) {
-                appendLog("重启进程成功: " + processName)
-                updateProcessList()
-
-                // 更新打开的标签页中的进程数据
-                updateProcessTabsData()
-            } else {
-                appendLog("重启进程失败: " + processName)
-            }
-        }
-    }
 
     /**
     * @brief 更新进程标签页中的数据

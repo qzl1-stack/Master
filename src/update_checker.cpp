@@ -6,7 +6,7 @@
 #include <QDebug>
 #include <QRegularExpression>
 
-const QString UpdateChecker::kCurrentVersion = "1.0.0"; // 与 main.cpp 中的版本一致
+const QString UpdateChecker::kCurrentVersion = "1.0.2"; // 与 main.cpp 中的版本一致
 const QString UpdateChecker::kVersionCheckUrl = "https://jts-tools-master.oss-cn-shanghai.aliyuncs.com/version.json";
 
 UpdateChecker::UpdateChecker(QObject* parent)
@@ -73,7 +73,7 @@ void UpdateChecker::OnVersionReply()
     if (reply->error() != QNetworkReply::NoError) {
         QString error_msg = tr("网络请求失败: %1").arg(reply->errorString());
         qWarning() << "UpdateChecker:" << error_msg;
-        emit UpdateCheckFailed(error_msg);
+        emit updateCheckFailed(error_msg);
         reply->deleteLater();
         return;
     }
@@ -86,7 +86,7 @@ void UpdateChecker::OnVersionReply()
     if (json_doc.isNull() || !json_doc.isObject()) {
         QString error_msg = tr("服务器返回的数据格式不正确");
         qWarning() << "UpdateChecker:" << error_msg;
-        emit UpdateCheckFailed(error_msg);
+        emit updateCheckFailed(error_msg);
         return;
     }
     
@@ -97,7 +97,7 @@ void UpdateChecker::OnNetworkError(QNetworkReply::NetworkError error)
 {
     QString error_msg = tr("网络错误: %1").arg(static_cast<int>(error));
     qWarning() << "UpdateChecker:" << error_msg;
-    emit UpdateCheckFailed(error_msg);
+    emit updateCheckFailed(error_msg);
 }
 
 void UpdateChecker::ParseVersionInfo(const QJsonObject& json)
@@ -109,7 +109,7 @@ void UpdateChecker::ParseVersionInfo(const QJsonObject& json)
     if (new_version.isEmpty()) {
         QString error_msg = tr("服务器未提供版本信息");
         qWarning() << "UpdateChecker:" << error_msg;
-        emit UpdateCheckFailed(error_msg);
+        emit updateCheckFailed(error_msg);
         return;
     }
     
@@ -123,7 +123,7 @@ void UpdateChecker::ParseVersionInfo(const QJsonObject& json)
     // 比较版本号
     if (new_version <= current_version_) {
         qDebug() << "UpdateChecker: 当前已是最新版本";
-        emit UpdateCheckCompleted(false);
+        emit updateCheckCompleted(false);
         return;
     }
     
@@ -132,7 +132,7 @@ void UpdateChecker::ParseVersionInfo(const QJsonObject& json)
     if (download_url.isEmpty()) {
         QString error_msg = tr("服务器未提供下载链接");
         qWarning() << "UpdateChecker:" << error_msg;
-        emit UpdateCheckFailed(error_msg);
+        emit updateCheckFailed(error_msg);
         return;
     }
     download_url_ = download_url;
@@ -156,7 +156,7 @@ void UpdateChecker::ParseVersionInfo(const QJsonObject& json)
     
     // 发出信号
     emit newVersionFound(new_version_, release_notes_, download_url_, current_version_);
-    emit UpdateCheckCompleted(true);
+    emit updateCheckCompleted(true);
 }
 
 QString UpdateChecker::ConvertMarkdownToHtml(const QString& markdown)

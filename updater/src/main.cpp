@@ -35,9 +35,11 @@ void customMessageOutput(QtMsgType type, const QMessageLogContext &context, cons
     std::cerr << txt.toStdString() << " (" << context.file << ":" << context.line << ", " << context.function << ")" << std::endl;
     
     // 同时写入日志文件
-    QString logDir = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation) + "/logs";
-    QDir().mkpath(logDir);
-    QString logFile = logDir + "/updater2_log.txt";
+    QDir logDir(QCoreApplication::applicationDirPath() + "/Master_logs");
+    if (!logDir.exists()) {
+        logDir.mkpath(".");
+    }
+    QString logFile = logDir.filePath("updater_log.txt");
     
     QFile file(logFile);
     if (file.open(QIODevice::WriteOnly | QIODevice::Append)) {
@@ -71,9 +73,8 @@ int main(int argc, char *argv[])
     qInstallMessageHandler(customMessageOutput);
     
     // 设置应用程序信息
-    app.setApplicationName("Log_analyzer Updater");
-    app.setApplicationVersion("1.0.0");
-    app.setOrganizationName("Log_analyzer");
+    app.setApplicationName("Master Updater");
+    app.setOrganizationName("Master");
     
     // 设置不在最后一个窗口关闭时退出
     app.setQuitOnLastWindowClosed(false);

@@ -357,7 +357,7 @@ QJsonObject ProjectConfig::createDefaultConfig()
     // 子进程配置
     QJsonObject processesConfig;
     QJsonObject sftpAgentConfig;
-    sftpAgentConfig["executable"] = "sftp_agent.exe"; // 假设子进程的可执行文件
+    sftpAgentConfig["executable"] = QCoreApplication::applicationDirPath() + "/VTA.exe"; // 假设子进程的可执行文件
     sftpAgentConfig["arguments"] = QJsonArray(); // 空参数
     processesConfig["文件传输"] = sftpAgentConfig;
 

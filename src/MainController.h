@@ -507,7 +507,7 @@ private:
      * @param retry_delay_ms 每次重试的延迟时间（毫秒），默认200ms
      * @return 窗口句柄，失败返回0
      */
-    qulonglong FindProcessMainWindow(const QString& process_id, int max_retries = 5, int retry_delay_ms = 200);
+    qulonglong FindProcessMainWindow(const QString& process_id, int max_retries = 10, int retry_delay_ms = 400);
 
     /**
      * @brief 从配置中初始化IPC
@@ -552,11 +552,6 @@ private:
      */
     void HandleHeartbeatMessage(const IpcMessage& message);
 
-    /**
-     * @brief 处理状态报告消息
-     * @param message IPC消息
-     */
-    void HandleStatusReportMessage(const IpcMessage& message);
 
     /**
      * @brief 处理日志消息

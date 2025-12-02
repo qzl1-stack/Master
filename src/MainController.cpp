@@ -63,7 +63,7 @@ MainController::~MainController()
     
     // 停止系统（如果还在运行）
     // if (initialization_state_ == kStarted) {
-    //     Stop();
+        // Stop();
     // }
     
     // 清理资源
@@ -942,9 +942,6 @@ void MainController::HandleIpcMessage(const IpcMessage& message)
         case MessageType::kHeartbeat:
             HandleHeartbeatMessage(message);
             break;
-        case MessageType::kStatusReport:
-            HandleStatusReportMessage(message);
-            break;
         case MessageType::kLogMessage:
             HandleLogMessage(message);
             break;
@@ -1564,19 +1561,7 @@ void MainController::HandleHeartbeatMessage(const IpcMessage& message)
     }
 }
 
-void MainController::HandleStatusReportMessage(const IpcMessage& message)
-{
-    qDebug() << "[MainController] 收到状态报告来自:" << message.sender_id;
-    
-    // 更新DataStore中的进程状态
-    if (data_store_) {
-        QString status_key = QString("process.%1.runtime_status").arg(message.sender_id);
-        data_store_->setValue(status_key, message.body);
 
-        QString update_key = QString("process.%1.last_status_update").arg(message.sender_id);
-        data_store_->setValue(update_key, QDateTime::currentDateTime());
-    }
-}
 
 void MainController::HandleLogMessage(const IpcMessage& message)
 {
@@ -1659,13 +1644,8 @@ BOOL CALLBACK EnumWindowsProc(HWND hwnd, LPARAM lParam) {
     WindowSearchData* data = reinterpret_cast<WindowSearchData*>(lParam);
     DWORD windowProcessId;
     GetWindowThreadProcessId(hwnd, &windowProcessId);
-
-    char windowTitle[256] = {0};
-    GetWindowTextA(hwnd, windowTitle, sizeof(windowTitle));
-    BOOL visible = IsWindowVisible(hwnd);
-
     if (windowProcessId == data->processId) {
-        if (visible) {
+        if (IsWindowVisible(hwnd)) {
             data->foundWindow = hwnd;
             return FALSE;
         }
@@ -1674,27 +1654,19 @@ BOOL CALLBACK EnumWindowsProc(HWND hwnd, LPARAM lParam) {
 }
 
 qulonglong MainController::FindProcessMainWindow(const QString& process_id, int max_retries, int retry_delay_ms)
-{
-    if (!process_manager_) {
-        qWarning() << "[MainController] FindProcessMainWindow: ProcessManager 未初始化";
-        return 0;
-    }
-    
+{   
     const ProcessManager::ProcessInfo* process_info = process_manager_->GetProcessInfo(process_id);
     if (!process_info) {
         qWarning() << "[MainController] FindProcessMainWindow: 进程信息不存在或已失效:" << process_id;
         return 0;
     }
     qint64 target_pid = process_info->pid;
-    if (target_pid <= 0) {
-        qWarning() << "[MainController] FindProcessMainWindow: 无效的进程PID:" << target_pid;
-        return 0;
-    }
     
     // 明确指示正在查找的PID
     qDebug() << "[MainController] FindProcessMainWindow: 正在查找进程\"" << process_id 
              << "\" (目标PID:" << target_pid << ") 的主窗口，最大重试次数:" << max_retries;
 
+    HWND returnData = nullptr;
     // 重试逻辑
     for (int attempt = 0; attempt < max_retries; ++attempt) {
         WindowSearchData searchData = {static_cast<DWORD>(target_pid), nullptr};
@@ -1705,7 +1677,8 @@ qulonglong MainController::FindProcessMainWindow(const QString& process_id, int 
                     << "\"的主窗口。PID:" << target_pid 
                     << " HWND:" << reinterpret_cast<qulonglong>(searchData.foundWindow)
                     << " (尝试次数:" << (attempt + 1) << ")";
-            return reinterpret_cast<qulonglong>(searchData.foundWindow);
+            returnData = searchData.foundWindow;
+            break;
         }
         
         // 如果不是最后一次尝试，等待后重试
@@ -1715,6 +1688,10 @@ qulonglong MainController::FindProcessMainWindow(const QString& process_id, int 
                      << (attempt + 1) << "/" << max_retries << ")";
             QThread::msleep(retry_delay_ms);
         }
+    }
+
+    if(returnData) {
+        return reinterpret_cast<qulonglong>(returnData);
     }
     
     qWarning() << "[MainController] 经过" << max_retries << "次尝试后，仍未找到进程\"" 

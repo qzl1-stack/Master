@@ -13,17 +13,33 @@
 #include <QTextStream>
 #include <QDateTime>
 
+void cleanupLogFile(const QString &logFilePath, qint64 maxSizeBytes = 10 * 1024 * 1024) {
+    QFileInfo fileInfo(logFilePath);
+    if (fileInfo.exists() && fileInfo.size() > maxSizeBytes) {
+        QFile logFile(logFilePath);
+        if (logFile.open(QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Text)) {
+            QTextStream stream(&logFile);
+            stream << QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss.zzz") 
+                   << " [Info] 日志文件已清理（超过大小限制 " 
+                   << (maxSizeBytes / 1024 / 1024) << "MB）" << Qt::endl;
+            logFile.close();
+        }
+    }
+}
+
 void customMessageOutput(QtMsgType type, const QMessageLogContext &context, const QString &msg)
 {
     // 确保日志目录存在
-    QDir logDir(QCoreApplication::applicationDirPath() + "/Master_logs");
+    QDir logDir(QCoreApplication::applicationDirPath() + "/logs");
     if (!logDir.exists()) {
         logDir.mkpath(".");
     }
 
     // 创建日志文件
-    QString logFilePath = logDir.filePath("app_log.txt");
+    QString logFilePath = logDir.filePath("Master_log.txt");
     QFile logFile(logFilePath);
+
+    cleanupLogFile(logFilePath);
     
     if (logFile.open(QIODevice::WriteOnly | QIODevice::Append | QIODevice::Text)) {
         QTextStream stream(&logFile);

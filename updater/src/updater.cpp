@@ -25,7 +25,7 @@
 #include "moc_updater.cpp"
 
 // 恢复 const QString 定义
-const QString Updater::kCurrentVersion = "1.0.0"; // 版本号，与主程序一致
+const QString Updater::kCurrentVersion = "1.0.2"; // 版本号，与主程序一致
 const QString Updater::kDownloadBaseUrl = "https://jts-tools-master.oss-cn-shanghai.aliyuncs.com/"; // 下载链接基础路径
 const QString Updater::kAppName = "appMaster.exe";
 
@@ -529,16 +529,10 @@ void Updater::OnDownloadFinished()
     setStatusText(tr("下载完成，正在关闭主程序准备安装更新..."));
     setShowProgress(false);
     
-    qDebug() << "OnDownloadFinished: 文件保存成功。即将调用 CloseMainApp()。";
+    qDebug() << "OnDownloadFinished: 文件保存成功。跳过 CloseMainApp（主程序已手动关闭）。";
     
-    // 尝试关闭主程序
-    try {
-        CloseMainApp();
-    } catch (const std::exception& e) {
-        qCritical() << "CloseMainApp 执行时发生异常:" << e.what();
-    } catch (...) {
-        qCritical() << "CloseMainApp 发生未知异常";
-    }
+    // 跳过关闭主程序的操作，假设主程序已被手动关闭
+    // CloseMainApp() 操作已省略
     
     // 使用 QTimer 延迟执行 InstallUpdate
     QTimer::singleShot(100, this, [this]() {
@@ -630,35 +624,32 @@ void Updater::InstallUpdate()
     qDebug() << "开始解压文件:" << file_path_;
     qDebug() << "解压目标路径:" << extract_path;
 
+    // 检查下载文件是否存在
     if (!QFile::exists(file_path_)) {
         qWarning() << "下载文件不存在:" << file_path_;
         setStatusText(tr("下载文件丢失"));
         emit updateFailed(tr("下载文件丢失"));
         
-        // 文件不存在时延迟退出
-        QTimer::singleShot(3000, this, [this]() {
-            qDebug() << "=== 下载文件丢失，即将退出 updater 进程 ===";
+        QTimer::singleShot(3000, this, []() {
             QCoreApplication::quit();
         });
         return;
     }
 
+    // 检查文件大小
     QFileInfo fileInfo(file_path_);
     if (fileInfo.size() == 0) {
         qWarning() << "下载文件大小为0:" << file_path_;
         setStatusText(tr("下载文件为空"));
         emit updateFailed(tr("下载文件为空"));
         
-        // 文件为空时延迟退出
-        QTimer::singleShot(3000, this, [this]() {
-            qDebug() << "=== 下载文件为空，即将退出 updater 进程 ===";
+        QTimer::singleShot(3000, this, []() {
             QCoreApplication::quit();
         });
         return;
     }
 
     qDebug() << "文件检查通过，大小:" << fileInfo.size() << "bytes";
-    setStatusText(tr("正在准备更新..."));
     
     // 创建批处理脚本来执行更新
     QString batchPath = QDir::tempPath() + "/Master_update.bat";
@@ -681,75 +672,175 @@ void Updater::InstallUpdate()
     QTextStream out(&batchFile);
     out.setEncoding(QStringConverter::System);
     
+    // 日志文件路径
+    QString logPath = QDir::tempPath() + "/Master_update_log.txt";
+    
     // 批处理脚本内容
     out << "@echo off\n";
-    out << "echo [Master-Updater] 批处理脚本开始执行\n";
-    out << "echo [Master-Updater] 等待更新程序退出...\n";
-    out << "timeout /t 1 /nobreak >nul\n"; // 减少到1秒，因为updater.exe会在2秒后自动退出
-    out << "echo [Master-Updater] 开始解压更新文件...\n";
+    out << "setlocal EnableDelayedExpansion\n"; // 启用延迟环境变量扩展，便于使用 !errorlevel!
+    out << "chcp 65001 >nul\n"; // 设置UTF-8编码
+    out << "echo ========================================\n";
+    out << "echo Master 自动更新脚本\n";
+    out << "echo 开始时间: %date% %time%\n";
+    out << "echo ========================================\n";
+    out << "echo.\n";
+    
+    // 将所有输出重定向到日志文件
+    out << "(\n";
+    
+    // [1/5] 强制结束相关进程并等待完全退出
+    out << "echo [1/5] 结束相关进程...\n";
+    out << "set \"PROCS=appMaster.exe appLog_analyzer.exe updater.exe\"\n";
+    out << ":kill_loop\n";
+    out << "set \"REMAIN=\"\n";
+    out << "for %%P in (!PROCS!) do (\n";
+    out << "    tasklist /FI \"IMAGENAME eq %%P\" | find /I \"%%P\" >nul\n";
+    out << "    if !errorlevel! EQU 0 (\n";
+    out << "        echo   检测到进程 %%P，尝试结束...\n";
+    out << "        taskkill /F /IM %%P >nul 2>&1\n";
+    out << "        set \"REMAIN=1\"\n";
+    out << "    )\n";
+    out << ")\n";
+    out << "if defined REMAIN (\n";
+    out << "    echo   仍有进程未退出，等待 1 秒...\n";
+    out << "    timeout /t 1 /nobreak >nul\n";
+    out << "    goto kill_loop\n";
+    out << ")\n";
+    out << "echo [1/5] 进程全部结束\n";
+    out << "echo.\n";
+    
+    // 检查 tar 命令是否可用
+    out << "echo [2/5] 检查解压工具...\n";
+    out << "where tar >nul 2>&1\n";
+    out << "if !errorlevel! neq 0 (\n";
+    out << "    echo [错误] 系统中未找到 tar 命令\n";
+    out << "    echo 请确保 Windows 10 版本 >= 1803\n";
+    out << "    pause\n";
+    out << "    exit /b 1\n";
+    out << ")\n";
+    out << "echo [2/5] tar 命令可用\n";
+    out << "echo.\n";
+    
+    // 检查源文件是否存在
+    out << "echo [3/5] 检查更新包...\n";
+    out << "if not exist \"" << QDir::toNativeSeparators(file_path_) << "\" (\n";
+    out << "    echo [错误] 更新包文件不存在\n";
+    out << "    pause\n";
+    out << "    exit /b 1\n";
+    out << ")\n";
+    out << "echo [3/5] 更新包文件存在\n";
+    out << "echo.\n";
+    
+    // 解压文件
+    out << "echo [4/5] 开始解压更新文件...\n";
+    out << "echo 源文件: " << QDir::toNativeSeparators(file_path_) << "\n";
+    out << "echo 目标目录: " << QDir::toNativeSeparators(extract_path) << "\n";
     
     QString tarCmd = QString("tar -xf \"%1\" -C \"%2\" --strip-components=1")
                         .arg(QDir::toNativeSeparators(file_path_))
                         .arg(QDir::toNativeSeparators(extract_path));
-    out << "echo [Master-Updater] 执行命令: " << tarCmd << "\n";
-    out << tarCmd << "\n";
+    out << "echo 执行: " << tarCmd << "\n";
+    out << tarCmd << " 2>&1\n"; // 重定向错误输出
     
-    out << "if %errorlevel% neq 0 (\n";
-    out << "    echo [Master-Updater] 解压失败，错误代码: %errorlevel%\n";
-    out << "    echo [Master-Updater] 按任意键继续...\n";
+    out << "if !errorlevel! neq 0 (\n";
+    out << "    echo [错误] 解压失败，错误代码: !errorlevel!\n";
+    out << "    echo 请检查文件权限或磁盘空间\n";
     out << "    pause\n";
     out << "    exit /b 1\n";
     out << ")\n";
+    out << "echo [4/5] 解压完成\n";
+    out << "echo.\n";
     
-    out << "echo [Master-Updater] 解压完成，删除临时文件...\n";
-    out << "del \"" << QDir::toNativeSeparators(file_path_) << "\"\n";
-    
-    out << "echo [Master-Updater] 启动新版本...\n";
+    // 验证解压结果
     QString newAppPath = QDir::toNativeSeparators(extract_path + "/" + kAppName);
-    out << "echo [Master-Updater] 新版本路径: " << newAppPath << "\n";
-    out << "start \"\" \"" << newAppPath << "\"\n";
+    out << "echo [5/5] 验证解压结果...\n";
+    out << "if not exist \"" << newAppPath << "\" (\n";
+    out << "    echo [错误] 未找到可执行文件: " << newAppPath << "\n";
+    out << "    pause\n";
+    out << "    exit /b 1\n";
+    out << ")\n";
+    out << "echo [5/5] 验证成功\n";
+    out << "echo.\n";
     
-    out << "echo [Master-Updater] 等待程序启动...\n";
-    out << "timeout /t 1 /nobreak >nul\n";
-    out << "echo [Master-Updater] 程序启动完成\n";
+    // 删除临时文件
+    out << "echo 清理临时文件...\n";
+    out << "del \"" << QDir::toNativeSeparators(file_path_) << "\" >nul 2>&1\n";
+    out << "echo 临时文件已清理\n";
+    out << "echo.\n";
     
-    out << "echo [Master-Updater] 清理批处理脚本...\n";
-    out << "timeout /t 2 /nobreak >nul\n"; // 等待2秒再删除自己
-    out << "del \"" << QDir::toNativeSeparators(batchPath) << "\"\n";
-    out << "echo [Master-Updater] 更新完成\n";
-    out << "exit\n";
+    // 启动新版本
+    out << "echo 启动新版本程序...\n";
+    out << "echo 程序路径: " << newAppPath << "\n";
+    out << "start \"Master\" \"" << newAppPath << "\"\n";
+    out << "if !errorlevel! neq 0 (\n";
+    out << "    echo [警告] 程序启动可能失败，错误代码: !errorlevel!\n";
+    out << "    echo 请手动启动: " << newAppPath << "\n";
+    out << "    pause\n";
+    out << ")\n";
+    out << "echo 程序已启动\n";
+    out << "echo.\n";
+    
+    // 完成
+    out << "echo ========================================\n";
+    out << "echo 更新完成！\n";
+    out << "echo 结束时间: %date% %time%\n";
+    out << "echo ========================================\n";
+    
+    // 结束日志重定向
+    out << ") > \"" << QDir::toNativeSeparators(logPath) << "\" 2>&1\n";
+    
+    // 显示日志文件内容
+    out << "type \"" << QDir::toNativeSeparators(logPath) << "\"\n";
+    out << "echo.\n";
+    out << "echo 日志已保存至: " << QDir::toNativeSeparators(logPath) << "\n";
+    
+    // 延迟后自动删除脚本
+    out << "timeout /t 3 /nobreak >nul\n";
+    out << "(goto) 2>nul & del \"%~f0\"\n"; // 自删除技巧
     
     batchFile.close();
     
     qDebug() << "批处理脚本已创建:" << batchPath;
+    qDebug() << "日志文件将保存至:" << logPath;
 
-    // 显示创建快捷方式选项，而不是立即退出
-    setTitleText(tr("更新完成"));
-    setStatusText(tr("软件更新完成！新版本已经启动。"));
-    setShowCreateShortcut(true);
-    setCancelButtonText(tr("完成"));
+    // 更新界面状态
+    setTitleText(tr("正在安装更新"));
+    setStatusText(tr("更新脚本正在运行，请稍候..."));
+    setShowProgress(false);
+    setShowCreateShortcut(false);
+    setCancelButtonText(tr("请稍候"));
     
     QStringList args;
-    args << "/k" << batchPath;
+    args << "/c" << batchPath; // 改用 /c 参数，执行后自动关闭
     
     qDebug() << "准备启动批处理脚本: cmd.exe" << args.join(" ");
     bool started = QProcess::startDetached("cmd.exe", args);
     
     if (started) {
+        qDebug() << "批处理脚本已启动成功";
+        
+        // 创建桌面快捷方式（在脚本执行期间）
         createDesktopShortcut();
         
-        // 延迟退出 updater 进程，确保批处理脚本能够正常启动和程序启动
-        QTimer::singleShot(3000, this, [this]() {
+        // 更新完成提示
+        setTitleText(tr("更新进行中"));
+        setStatusText(tr("更新脚本正在执行，请稍候...\n日志文件: %1").arg(logPath));
+        
+        // 延迟退出 updater 进程，给批处理脚本足够的执行时间
+        // 批处理脚本会在完成后自动删除自己
+        QTimer::singleShot(5000, this, [this, logPath]() {
             qDebug() << "=== InstallUpdate 完成，即将退出 updater 进程 ===";
+            qDebug() << "=== 请查看日志文件获取详细信息: " << logPath << " ===";
             QCoreApplication::quit();
         });
     } else {
-        qWarning() << "无法启动批处理脚本";
-        setStatusText(tr("启动更新脚本失败"));
+        qCritical() << "无法启动批处理脚本";
+        setTitleText(tr("更新失败"));
+        setStatusText(tr("无法启动更新脚本，请手动运行: %1").arg(batchPath));
         emit updateFailed(tr("无法启动更新脚本"));
         
         // 即使失败也要退出
-        QTimer::singleShot(3000, this, [this]() {
+        QTimer::singleShot(5000, this, [this]() {
             qDebug() << "=== 更新失败，即将退出 updater 进程 ===";
             QCoreApplication::quit();
         });

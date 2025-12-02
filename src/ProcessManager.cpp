@@ -594,18 +594,18 @@ void ProcessManager::CheckHeartbeat()
         qWarning() << "[ProcessManager] 进程心跳超时:" << process_id;
         emit HeartbeatTimeout(process_id);
         
-        auto it = process_info_map_.find(process_id);
-        if (it != process_info_map_.end()) {
-            ProcessInfo& info = it.value();
+        // auto it = process_info_map_.find(process_id);
+        // if (it != process_info_map_.end()) {
+        //     ProcessInfo& info = it.value();
             
-            // 如果启用自动重启且重启次数未超限，则重启进程
-            if (info.auto_restart && info.restart_count < info.max_restart_count) {
-                qDebug() << "[ProcessManager] 心跳超时，准备自动重启进程:" << process_id;
-                locker.unlock();
-                ExecuteAutoRestart(process_id);
-                locker.relock();
-            }
-        }
+        //     // 如果启用自动重启且重启次数未超限，则重启进程
+        //     if (info.auto_restart && info.restart_count < info.max_restart_count) {
+        //         qDebug() << "[ProcessManager] 心跳超时，准备自动重启进程:" << process_id;
+        //         locker.unlock();
+        //         ExecuteAutoRestart(process_id);
+        //         locker.relock();
+        //     }
+        // }
     }
 }
 
