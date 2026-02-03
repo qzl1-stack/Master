@@ -15,7 +15,7 @@ import Master // 导入 Master 模块以使用 WorkspaceSelector 组件
  */
 ApplicationWindow {
     id: mainWindow
-    title: "Master"
+    title: "JT Studio"
     width: 1400
     height: 900
     visible: true

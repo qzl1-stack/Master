@@ -35,7 +35,7 @@ void customMessageOutput(QtMsgType type, const QMessageLogContext &context, cons
     std::cerr << txt.toStdString() << " (" << context.file << ":" << context.line << ", " << context.function << ")" << std::endl;
     
     // 同时写入日志文件
-    QDir logDir(QCoreApplication::applicationDirPath() + "/Master_logs");
+    QDir logDir(QCoreApplication::applicationDirPath() + "/logs");
     if (!logDir.exists()) {
         logDir.mkpath(".");
     }

@@ -6,7 +6,7 @@
 #include <QDebug>
 #include <QRegularExpression>
 
-const QString UpdateChecker::kCurrentVersion = "1.0.2"; // 与 main.cpp 中的版本一致
+const QString UpdateChecker::kCurrentVersion = "1.0.8"; // 与 main.cpp 中的版本一致
 const QString UpdateChecker::kVersionCheckUrl = "https://jts-tools-master.oss-cn-shanghai.aliyuncs.com/version.json";
 
 UpdateChecker::UpdateChecker(QObject* parent)

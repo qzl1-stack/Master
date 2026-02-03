@@ -151,12 +151,12 @@ Rectangle {
                     font.family: "Microsoft YaHei"
                 }
 
-                Text {
-                    text: qsTr("%1 → %2").arg(currentVersion).arg(newVersion)
-                    font.pixelSize: 11
-                    color: "#9A9A9A"
-                    font.family: "Microsoft YaHei"
-                }
+                // Text {
+                //     text: qsTr("%1 → %2").arg(currentVersion).arg(newVersion)
+                //     font.pixelSize: 11
+                //     color: "#9A9A9A"
+                //     font.family: "Microsoft YaHei"
+                // }
             }
         }
 

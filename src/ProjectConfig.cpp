@@ -368,6 +368,28 @@ QJsonObject ProjectConfig::createDefaultConfig()
     processesConfig["AGV分析"] = logAgentConfig;
     defaultConfig["processes"] = processesConfig;
 
+    // QJsonObject serialAgentConfig;
+    // QString serialAgentExecutable = QCoreApplication::applicationDirPath() + "/SerialMate.exe";
+    // serialAgentConfig["executable"] = serialAgentExecutable; // 假设serial_agent的可执行文件
+    // serialAgentConfig["arguments"] = QJsonArray(); // 空参数
+    // processesConfig["串口分析"] = serialAgentConfig;
+    // defaultConfig["processes"] = processesConfig;
+
+    // QJsonObject uartAgentConfig;
+    // QString uartAgentExecutable = QCoreApplication::applicationDirPath() + "/wu_xc_uart_tool.exe";
+    // uartAgentConfig["executable"] = uartAgentExecutable; // 假设serial_agent的可执行文件
+    // uartAgentConfig["arguments"] = QJsonArray(); // 空参数
+    // processesConfig["吴工上位机"] = uartAgentConfig;
+    // defaultConfig["processes"] = processesConfig;
+
+    // QJsonObject agv_designConfig;
+    // QString agvDesignExecutable = QCoreApplication::applicationDirPath() + "/agv_design_tool.exe";
+    // agv_designConfig["executable"] = agvDesignExecutable; // 假设serial_agent的可执行文件
+    // agv_designConfig["arguments"] = QJsonArray(); // 空参数
+    // processesConfig["重庆AGV设计"] = agv_designConfig;
+    // defaultConfig["processes"] = processesConfig;
+
+
     // 工作目录
     QString defaultWorkDir = QCoreApplication::applicationDirPath();
     defaultConfig["work_directory"] = defaultWorkDir;

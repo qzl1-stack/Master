@@ -76,10 +76,6 @@ public:
     };
 
 private:
-    /**
-     * @brief 私有构造函数（单例模式）
-     * @param parent 父对象指针
-     */
     explicit MainController(QObject* parent = nullptr);
     
     /**
@@ -99,94 +95,24 @@ public:
      * @param config_file_path 配置文件路径（可选，默认使用标准路径）
      */
     Q_INVOKABLE bool Initialize(const QString& config_file_path = QString());
-    
-    /**
-     * @brief 系统启动
-     * 
-     * 启动所有服务和子进程：
-     * 1. 启动IPC服务端监听
-     * 2. 根据配置启动业务子进程
-     * 3. 启动系统监控和心跳检测
-     * 4. 更新DataStore状态快照
-     * 
-     * @return true 启动成功，false 启动失败
-     */
     Q_INVOKABLE bool Start();
-    
-    /**
-     * @brief 系统停止
-     * @param timeout_ms 停止超时时间（毫秒），默认10秒
-     * @return true 停止成功，false 停止超时或失败
-     */
     Q_INVOKABLE bool Stop(int timeout_ms = 5000);
-    
-    /**
-     * @brief 系统重启
-     * @param config_file_path 配置文件路径（可选）
-     * @return true 重启成功，false 重启失败
-     */
     Q_INVOKABLE bool Restart(const QString& config_file_path = QString());
     
-    /**
-     * @brief 获取当前初始化状态
-     * @return 初始化状态枚举值
-     */
     Q_INVOKABLE InitializationState GetInitializationState() const;
     
-    /**
-     * @brief 获取当前系统状态
-     * @return 系统状态枚举值
-     */
     Q_INVOKABLE SystemStatus GetSystemStatus() const;
-    
-    /**
-     * @brief 检查系统是否健康运行
-     * @return true 系统健康，false 存在问题
-     */
+
     Q_INVOKABLE bool IsSystemHealthy() const;
     
-    /**
-     * @brief 获取系统运行统计信息
-     * @return 包含系统统计信息的JSON对象
-     */
     Q_INVOKABLE QJsonObject GetSystemStatistics() const;
     
     // ==================== 模块访问接口 ====================
-    
-    /**
-     * @brief 获取ProcessManager实例
-     * @return ProcessManager指针，如果未初始化则返回nullptr
-     */
     ProcessManager* GetProcessManager() const;
-    
-    /**
-     * @brief 获取ProjectConfig实例
-     * @return ProjectConfig指针，如果未初始化则返回nullptr
-     */
     ProjectConfig* GetProjectConfig() const;
-    
-    /**
-     * @brief 获取DataStore实例
-     * @return DataStore指针，如果未初始化则返回nullptr
-     */
     DataStore* GetDataStore() const;
-    
-    /**
-     * @brief 获取LogAggregator实例
-     * @return LogAggregator指针，如果未初始化则返回nullptr
-     */
     LogAggregator* GetLogAggregator() const;
-    
-    /**
-     * @brief 获取IpcContext实例
-     * @return IpcContext指针，如果未初始化则返回nullptr
-     */
     IpcContext* GetIpcContext() const;
-    
-    /**
-     * @brief 获取UpdateChecker实例
-     * @return UpdateChecker指针，如果未初始化则返回nullptr
-     */
     UpdateChecker* GetUpdateChecker() const;
     
     // ==================== 业务流程接口 ====================
@@ -233,12 +159,6 @@ public:
                                    const QJsonObject& parameters = QJsonObject(),
                                    int timeout_ms = 10000);
     
-    /**
-     * @brief 广播命令到所有子进程
-     * @param command 命令名称
-     * @param parameters 命令参数
-     * @return 包含所有进程响应的JSON对象
-     */
     Q_INVOKABLE QJsonObject BroadcastCommand(const QString& command, 
                                const QJsonObject& parameters = QJsonObject());
     
@@ -254,6 +174,8 @@ public:
     
     Q_INVOKABLE bool EmbedProcessWindow(const QString& process_id, QObject* container_item);
     Q_INVOKABLE bool UpdateEmbeddedWindowGeometry(const QString& process_id, QObject* container_item);
+    Q_INVOKABLE bool SetEmbeddedProcessWindowVisible(const QString& process_id,
+                                                    bool visible);
     Q_INVOKABLE void startEmbeddingProcess(const QString& process_name);
     Q_INVOKABLE void finishEmbeddingProcess(const QString& process_name);
 
@@ -674,6 +596,7 @@ private:
     mutable QMutex embedding_mutex_;
     QHash<QString, bool> embedding_in_progress_;
     QHash<QString, bool> embedding_cancelled_;
+    QHash<QString, qulonglong> embedded_window_handles_; // 缓存已嵌入的窗口句柄
 
     // ==================== 系统统计 ====================
     struct SystemStatistics {

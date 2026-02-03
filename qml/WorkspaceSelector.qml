@@ -1,13 +1,16 @@
 import QtQuick 6.0
 import QtQuick.Controls 6.0
 import QtQuick.Layouts 6.0
+import QtQuick.Controls.Basic 6.0
 import Master 1.0 // 导入 Master 模块以使用 FolderDialogHelper
 
 
 Rectangle {
     id: workspaceSelectorRoot
     color: "#1e1e1e"
-    anchors.fill: parent
+    // 移除 anchors.fill: parent，让 StackView 管理大小
+    width: parent.width
+    height: parent.height
 
     // 属性定义
     property var mainController: null
@@ -27,44 +30,47 @@ Rectangle {
         width: Math.min(600, parent.width * 0.8)
         spacing: 30
 
-        // 标题区域
+        // 标题区域 - 专业现代化设计
         ColumnLayout {
             Layout.alignment: Qt.AlignHCenter
-            spacing: 15
+            spacing: 20
 
-            // Logo 和标题
+            // 应用名称
+            Text {
+                Layout.alignment: Qt.AlignHCenter
+                text: "JT Studio"
+                color: "#ffffff"
+                font.pixelSize: 32
+                font.bold: true
+                font.family: "Arial"
+            }
+
+            // 公司名称（中文）
+            Text {
+                Layout.alignment: Qt.AlignHCenter
+                text: "长沙创新中心"
+                color: "#cccccc"
+                font.pixelSize: 16
+                font.bold: true
+                font.family: "Microsoft YaHei, SimHei"
+            }
+
+            // 公司名称（英文）
+            Text {
+                Layout.alignment: Qt.AlignHCenter
+                text: "Changsha Innovation Center"
+                color: "#999999"
+                font.pixelSize: 12
+                font.family: "Arial"
+            }
+
+            // 分隔线
             Rectangle {
                 Layout.alignment: Qt.AlignHCenter
-                width: 80
-                height: 80
-                radius: 10
-                color: "#007acc"
-                border.color: "#005a9e"
-                border.width: 2
-
-                Text {
-                    anchors.centerIn: parent
-                    text: "M"
-                    color: "white"
-                    font.pixelSize: 36
-                    font.bold: true
-                    font.family: "Arial"
-                }
-            }
-
-            Text {
-                Layout.alignment: Qt.AlignHCenter
-                text: "Master 主控系统"
-                color: "#cccccc"
-                font.pixelSize: 24
-                font.bold: true
-            }
-
-            Text {
-                Layout.alignment: Qt.AlignHCenter
-                text: "选择一个工作目录以开始"
-                color: "#999999"
-                font.pixelSize: 14
+                width: 200
+                height: 1
+                color: "#3e3e42"
+                Layout.topMargin: 10
             }
         }
 
@@ -104,6 +110,7 @@ Rectangle {
                         spacing: 2
 
                         delegate: Rectangle {
+                            id: workspaceItemDelegate
                             width: ListView.view.width
                             height: 45
                             color: workspaceMouseArea.containsMouse ? "#37373d" : "transparent"
@@ -167,32 +174,40 @@ Rectangle {
                                     text: formatLastUsed(modelData.lastUsed)
                                     color: "#666666"
                                     font.pixelSize: 10
-                                    Layout.alignment: Qt.AlignTop
+                                    Layout.alignment: Qt.AlignTop | Qt.AlignRight
                                 }
 
-                                // 删除按钮
-                                Button {
-                                    visible: workspaceMouseArea.containsMouse
-                                    text: "×"
-                                    Layout.preferredWidth: 20
-                                    Layout.preferredHeight: 20
+                                // 删除图标 (始终可见但灰显)
+                                Rectangle {
+                                    width: 28
+                                    height: 28
+                                    color: "transparent"
+                                    radius: 4
+                                    Layout.rightMargin: 4
+                                    Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
 
-                                    background: Rectangle {
-                                        color: parent.hovered ? "#f44336" : "transparent"
-                                        radius: 10
+                                    Text {
+                                        anchors.centerIn: parent
+                                        text: "×"
+                                        color: "#cccccc"
+                                        font.pixelSize: 18
+                                        font.bold: true
+                                        visible: workspaceMouseArea.containsMouse
                                     }
 
-                                    contentItem: Text {
-                                        text: parent.text
-                                        color: parent.hovered ? "white" : "#cccccc"
-                                        font.pixelSize: 12
-                                        horizontalAlignment: Text.AlignHCenter
-                                        verticalAlignment: Text.AlignVCenter
+                                    MouseArea {
+                                        anchors.fill: parent
+                                        cursorShape: Qt.PointingHandCursor
+                                        
+                                        onClicked: {
+                                            removeWorkspaceFromHistory(index)
+                                        }
                                     }
 
-                                    onClicked: {
-                                        removeWorkspaceFromHistory(index)
-                                        mouse.accepted = true
+                                    Behavior on color {
+                                        ColorAnimation {
+                                            duration: 150
+                                        }
                                     }
                                 }
                             }

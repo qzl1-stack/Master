@@ -70,15 +70,6 @@ public:
 
     bool Initialize();
 
-    /**
-     * @brief 添加（注册）一个新进程，但不立即启动
-     * @param process_id 进程标识符
-     * @param executable_path 可执行文件路径
-     * @param arguments 启动参数
-     * @param working_directory 工作目录
-     * @param auto_restart 是否自动重启
-     * @return 添加是否成功
-     */
     bool AddProcess(const QString& process_id,
                     const QString& executable_path,
                     const QStringList& arguments = QStringList(),
@@ -90,9 +81,6 @@ public:
      * @param process_id 进程标识符
      * @param executable_path 可执行文件路径
      * @param arguments 启动参数
-     * @param working_directory 工作目录
-     * @param auto_restart 是否自动重启
-     * @return 启动是否成功
      */
     bool StartProcess(const QString& process_id, 
                      const QString& executable_path,

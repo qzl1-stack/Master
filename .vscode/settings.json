@@ -1,0 +1,9 @@
+{
+    "editor.multiCursorModifier": "alt",
+    "C_Cpp.errorSquiggles": "disabled",
+    "C_Cpp.intelliSenseEngine": "disabled",
+    "clangd.arguments": [
+        "--clang-tidy=false",
+        "--header-insertion=never"
+    ]
+}

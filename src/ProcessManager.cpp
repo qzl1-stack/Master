@@ -581,8 +581,8 @@ void ProcessManager::CheckHeartbeat()
     for (auto it = process_info_map_.begin(); it != process_info_map_.end(); ++it) {
         if (it->status == kRunning) {
             qint64 elapsed_ms = it->last_heartbeat.msecsTo(current_time);
-            qDebug() << "elapsed_ms:" << elapsed_ms;
-            qDebug() << "heartbeat_timeout_ms_:" << heartbeat_timeout_ms_;
+            // qDebug() << "elapsed_ms:" << elapsed_ms;
+            // qDebug() << "heartbeat_timeout_ms_:" << heartbeat_timeout_ms_;
             if (elapsed_ms > heartbeat_timeout_ms_) {
                 timeout_processes.append(it.key());
             }

@@ -219,8 +219,8 @@ bool MainController::Stop(int timeout_ms)
 
         // 1.1 优雅关闭提示：先通知子进程自行退出（通过IPC），给予短暂宽限
         if (ipc_context_ && process_manager_) {
-            QJsonObject params; // 可按需添加上下文
-            qDebug() << "[MainController] 广播优雅退出指令给子进程";
+            QJsonObject params; 
+            params["command"] = "graceful_shutdown";
             BroadcastCommand("graceful_shutdown", params);
         }
 
@@ -590,8 +590,10 @@ bool MainController::EmbedProcessWindow(const QString& process_id, QObject* cont
     
     auto process_info = process_manager_->GetProcessInfo(process_id);
     int status = process_info->status;
-    if (status != static_cast<int>(ProcessManager::kStarting)) {
-        qWarning() << "[MainController] EmbedProcessWindow: 进程未运行，状态:" << status;
+    // 允许正在启动或已经运行的进程进行嵌入（支持重新嵌入）
+    if (status != static_cast<int>(ProcessManager::kStarting) && 
+        status != static_cast<int>(ProcessManager::kRunning)) {
+        qWarning() << "[MainController] EmbedProcessWindow: 进程状态不满足嵌入要求(非Starting/Running)，状态:" << status;
         return false;
     }
     
@@ -662,6 +664,66 @@ bool MainController::UpdateEmbeddedWindowGeometry(const QString& process_id, QOb
 #else
     Q_UNUSED(child_window_handle)
     qWarning() << "[MainController] 当前平台不支持更新嵌入窗口几何";
+    return false;
+#endif
+}
+
+bool MainController::SetEmbeddedProcessWindowVisible(const QString& process_id,
+                                                    bool visible)
+{
+    if (process_id.isEmpty()) {
+        qWarning() << "[MainController] SetEmbeddedProcessWindowVisible: process_id为空";
+        return false;
+    }
+
+    qulonglong child_window_handle = 0;
+    {
+        QMutexLocker locker(&embedding_mutex_);
+        child_window_handle = embedded_window_handles_.value(process_id, 0);
+    }
+
+    if (child_window_handle == 0) {
+        child_window_handle = FindProcessMainWindow(process_id);
+        if (child_window_handle == 0) {
+            qWarning() << "[MainController] SetEmbeddedProcessWindowVisible: 无法找到进程窗口:"
+                       << process_id;
+            return false;
+        }
+        {
+            QMutexLocker locker(&embedding_mutex_);
+            embedded_window_handles_[process_id] = child_window_handle;
+        }
+    }
+
+#ifdef Q_OS_WIN
+    HWND child_hwnd = reinterpret_cast<HWND>(child_window_handle);
+    if (!IsWindow(child_hwnd)) {
+        qWarning() << "[MainController] SetEmbeddedProcessWindowVisible: HWND无效:"
+                   << process_id << "HWND:" << child_window_handle;
+        {
+            QMutexLocker locker(&embedding_mutex_);
+            embedded_window_handles_.remove(process_id);
+        }
+        return false;
+    }
+
+    const UINT pos_flags = SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOSIZE |
+                           (visible ? SWP_SHOWWINDOW : SWP_HIDEWINDOW);
+    const BOOL pos_ok = SetWindowPos(child_hwnd, nullptr, 0, 0, 0, 0, pos_flags);
+    if (!pos_ok) {
+        const DWORD error = GetLastError();
+        qWarning() << "[MainController] SetEmbeddedProcessWindowVisible: SetWindowPos失败，错误码:"
+                   << error << "process_id:" << process_id;
+        return false;
+    }
+
+    ShowWindow(child_hwnd, visible ? SW_SHOWNOACTIVATE : SW_HIDE);
+    qDebug() << "[MainController] SetEmbeddedProcessWindowVisible:"
+             << process_id << (visible ? "show" : "hide");
+    return true;
+#else
+    Q_UNUSED(child_window_handle)
+    qWarning() << "[MainController] 当前平台不支持隐藏/显示嵌入窗口";
     return false;
 #endif
 }
@@ -884,6 +946,16 @@ void MainController::HandleProcessStatusChanged(const QString& process_id, int o
         QString update_time_key = QString("process.%1.last_update").arg(process_id);
         data_store_->setValue(update_time_key, QDateTime::currentDateTime());
     }
+
+    // 如果进程停止或崩溃，清理缓存的窗口句柄
+    if (new_status == static_cast<int>(ProcessManager::kNotRunning) || 
+        new_status == static_cast<int>(ProcessManager::kCrashed)) {
+        QMutexLocker locker(&embedding_mutex_);
+        if (embedded_window_handles_.contains(process_id)) {
+            qDebug() << "[MainController] 进程已停止，移除缓存的窗口句柄:" << process_id;
+            embedded_window_handles_.remove(process_id);
+        }
+    }
     
     // 根据状态变化发出相应信号
     if (new_status == static_cast<int>(ProcessManager::kRunning)) {
@@ -930,9 +1002,6 @@ void MainController::HandleIpcMessage(const IpcMessage& message)
     QMutexLocker locker(&statistics_mutex_);
     system_statistics_.total_messages_processed++;
     locker.unlock();
-    
-    qDebug() << "[MainController] 收到IPC消息:" << static_cast<int>(message.type) 
-             << "来自:" << message.sender_id;
     
     // 根据消息类型进行处理
     switch (message.type) {
@@ -1536,7 +1605,6 @@ void MainController::HandleHeartbeatMessage(const IpcMessage& message)
 {
     // 更新进程心跳
     if (process_manager_) {
-        qDebug() << "[MainController] 收到心跳来自:" << message.sender_id;
         QJsonObject body = message.body;
         QString process_name = body["process_name"].toString();
         qDebug() << "[MainController] 更新心跳:" << process_name;
@@ -1655,6 +1723,24 @@ BOOL CALLBACK EnumWindowsProc(HWND hwnd, LPARAM lParam) {
 
 qulonglong MainController::FindProcessMainWindow(const QString& process_id, int max_retries, int retry_delay_ms)
 {   
+    // 1. 首先检查缓存中是否已有该进程的窗口句柄
+    {
+        QMutexLocker locker(&embedding_mutex_);
+        if (embedded_window_handles_.contains(process_id)) {
+            qulonglong cachedHandle = embedded_window_handles_[process_id];
+#ifdef Q_OS_WIN
+            HWND hwnd = reinterpret_cast<HWND>(cachedHandle);
+            if (IsWindow(hwnd)) {
+                qDebug() << "[MainController] 使用缓存的窗口句柄 for" << process_id << ":" << cachedHandle;
+                return cachedHandle;
+            } else {
+                qWarning() << "[MainController] 缓存的窗口句柄无效，移除:" << process_id;
+                embedded_window_handles_.remove(process_id);
+            }
+#endif
+        }
+    }
+
     const ProcessManager::ProcessInfo* process_info = process_manager_->GetProcessInfo(process_id);
     if (!process_info) {
         qWarning() << "[MainController] FindProcessMainWindow: 进程信息不存在或已失效:" << process_id;
@@ -1691,7 +1777,13 @@ qulonglong MainController::FindProcessMainWindow(const QString& process_id, int 
     }
 
     if(returnData) {
-        return reinterpret_cast<qulonglong>(returnData);
+        qulonglong handle = reinterpret_cast<qulonglong>(returnData);
+        // 找到后缓存句柄
+        {
+            QMutexLocker locker(&embedding_mutex_);
+            embedded_window_handles_[process_id] = handle;
+        }
+        return handle;
     }
     
     qWarning() << "[MainController] 经过" << max_retries << "次尝试后，仍未找到进程\"" 
@@ -1740,6 +1832,12 @@ bool MainController::EmbedProcessWindowImpl(const QString& process_id, qulonglon
             << "子窗口:" << child_window_handle 
             << "父窗口:" << container_window_id;
     
+    // 更新缓存（虽然FindProcessMainWindow已经缓存了，但这里确认嵌入成功）
+    {
+        QMutexLocker locker(&embedding_mutex_);
+        embedded_window_handles_[process_id] = child_window_handle;
+    }
+
     return true;
 }
 

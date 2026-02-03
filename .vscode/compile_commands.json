@@ -1,0 +1,194 @@
+[
+{
+  "directory": "C:/Users/28702/Desktop/Master/1.software/Master/build",
+  "command": "D:\\QT6\\Tools\\mingw1120_64\\bin\\g++.exe -DMINGW_HAS_SECURE_API=1 -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NEEDS_QMAIN -DQT_NETWORK_LIB -DQT_OPENGL_LIB -DQT_QMLBUILTINS_LIB -DQT_QMLINTEGRATION_LIB -DQT_QMLMODELS_LIB -DQT_QML_LIB -DQT_QUICKCONTROLS2_LIB -DQT_QUICK_LIB -DQT_WIDGETS_LIB -DUNICODE -DWIN32 -DWIN64 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -D_UNICODE -D_WIN64 @CMakeFiles/appMaster.dir/includes_CXX.rsp -g -std=gnu++17 -o CMakeFiles\\appMaster.dir\\appMaster_autogen\\mocs_compilation.cpp.obj -c C:\\Users\\28702\\Desktop\\Master\\1.software\\Master\\build\\appMaster_autogen\\mocs_compilation.cpp",
+  "file": "C:/Users/28702/Desktop/Master/1.software/Master/build/appMaster_autogen/mocs_compilation.cpp",
+  "output": "CMakeFiles/appMaster.dir/appMaster_autogen/mocs_compilation.cpp.obj"
+},
+{
+  "directory": "C:/Users/28702/Desktop/Master/1.software/Master/build",
+  "command": "D:\\QT6\\Tools\\mingw1120_64\\bin\\g++.exe -DMINGW_HAS_SECURE_API=1 -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NEEDS_QMAIN -DQT_NETWORK_LIB -DQT_OPENGL_LIB -DQT_QMLBUILTINS_LIB -DQT_QMLINTEGRATION_LIB -DQT_QMLMODELS_LIB -DQT_QML_LIB -DQT_QUICKCONTROLS2_LIB -DQT_QUICK_LIB -DQT_WIDGETS_LIB -DUNICODE -DWIN32 -DWIN64 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -D_UNICODE -D_WIN64 @CMakeFiles/appMaster.dir/includes_CXX.rsp -g -std=gnu++17 -o CMakeFiles\\appMaster.dir\\src\\main.cpp.obj -c C:\\Users\\28702\\Desktop\\Master\\1.software\\Master\\src\\main.cpp",
+  "file": "C:/Users/28702/Desktop/Master/1.software/Master/src/main.cpp",
+  "output": "CMakeFiles/appMaster.dir/src/main.cpp.obj"
+},
+{
+  "directory": "C:/Users/28702/Desktop/Master/1.software/Master/build",
+  "command": "D:\\QT6\\Tools\\mingw1120_64\\bin\\g++.exe -DMINGW_HAS_SECURE_API=1 -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NEEDS_QMAIN -DQT_NETWORK_LIB -DQT_OPENGL_LIB -DQT_QMLBUILTINS_LIB -DQT_QMLINTEGRATION_LIB -DQT_QMLMODELS_LIB -DQT_QML_LIB -DQT_QUICKCONTROLS2_LIB -DQT_QUICK_LIB -DQT_WIDGETS_LIB -DUNICODE -DWIN32 -DWIN64 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -D_UNICODE -D_WIN64 @CMakeFiles/appMaster.dir/includes_CXX.rsp -g -std=gnu++17 -o CMakeFiles\\appMaster.dir\\src\\ProjectConfig.cpp.obj -c C:\\Users\\28702\\Desktop\\Master\\1.software\\Master\\src\\ProjectConfig.cpp",
+  "file": "C:/Users/28702/Desktop/Master/1.software/Master/src/ProjectConfig.cpp",
+  "output": "CMakeFiles/appMaster.dir/src/ProjectConfig.cpp.obj"
+},
+{
+  "directory": "C:/Users/28702/Desktop/Master/1.software/Master/build",
+  "command": "D:\\QT6\\Tools\\mingw1120_64\\bin\\g++.exe -DMINGW_HAS_SECURE_API=1 -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NEEDS_QMAIN -DQT_NETWORK_LIB -DQT_OPENGL_LIB -DQT_QMLBUILTINS_LIB -DQT_QMLINTEGRATION_LIB -DQT_QMLMODELS_LIB -DQT_QML_LIB -DQT_QUICKCONTROLS2_LIB -DQT_QUICK_LIB -DQT_WIDGETS_LIB -DUNICODE -DWIN32 -DWIN64 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -D_UNICODE -D_WIN64 @CMakeFiles/appMaster.dir/includes_CXX.rsp -g -std=gnu++17 -o CMakeFiles\\appMaster.dir\\src\\DataStore.cpp.obj -c C:\\Users\\28702\\Desktop\\Master\\1.software\\Master\\src\\DataStore.cpp",
+  "file": "C:/Users/28702/Desktop/Master/1.software/Master/src/DataStore.cpp",
+  "output": "CMakeFiles/appMaster.dir/src/DataStore.cpp.obj"
+},
+{
+  "directory": "C:/Users/28702/Desktop/Master/1.software/Master/build",
+  "command": "D:\\QT6\\Tools\\mingw1120_64\\bin\\g++.exe -DMINGW_HAS_SECURE_API=1 -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NEEDS_QMAIN -DQT_NETWORK_LIB -DQT_OPENGL_LIB -DQT_QMLBUILTINS_LIB -DQT_QMLINTEGRATION_LIB -DQT_QMLMODELS_LIB -DQT_QML_LIB -DQT_QUICKCONTROLS2_LIB -DQT_QUICK_LIB -DQT_WIDGETS_LIB -DUNICODE -DWIN32 -DWIN64 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -D_UNICODE -D_WIN64 @CMakeFiles/appMaster.dir/includes_CXX.rsp -g -std=gnu++17 -o CMakeFiles\\appMaster.dir\\src\\IpcMessage.cpp.obj -c C:\\Users\\28702\\Desktop\\Master\\1.software\\Master\\src\\IpcMessage.cpp",
+  "file": "C:/Users/28702/Desktop/Master/1.software/Master/src/IpcMessage.cpp",
+  "output": "CMakeFiles/appMaster.dir/src/IpcMessage.cpp.obj"
+},
+{
+  "directory": "C:/Users/28702/Desktop/Master/1.software/Master/build",
+  "command": "D:\\QT6\\Tools\\mingw1120_64\\bin\\g++.exe -DMINGW_HAS_SECURE_API=1 -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NEEDS_QMAIN -DQT_NETWORK_LIB -DQT_OPENGL_LIB -DQT_QMLBUILTINS_LIB -DQT_QMLINTEGRATION_LIB -DQT_QMLMODELS_LIB -DQT_QML_LIB -DQT_QUICKCONTROLS2_LIB -DQT_QUICK_LIB -DQT_WIDGETS_LIB -DUNICODE -DWIN32 -DWIN64 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -D_UNICODE -D_WIN64 @CMakeFiles/appMaster.dir/includes_CXX.rsp -g -std=gnu++17 -o CMakeFiles\\appMaster.dir\\src\\LogEntry.cpp.obj -c C:\\Users\\28702\\Desktop\\Master\\1.software\\Master\\src\\LogEntry.cpp",
+  "file": "C:/Users/28702/Desktop/Master/1.software/Master/src/LogEntry.cpp",
+  "output": "CMakeFiles/appMaster.dir/src/LogEntry.cpp.obj"
+},
+{
+  "directory": "C:/Users/28702/Desktop/Master/1.software/Master/build",
+  "command": "D:\\QT6\\Tools\\mingw1120_64\\bin\\g++.exe -DMINGW_HAS_SECURE_API=1 -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NEEDS_QMAIN -DQT_NETWORK_LIB -DQT_OPENGL_LIB -DQT_QMLBUILTINS_LIB -DQT_QMLINTEGRATION_LIB -DQT_QMLMODELS_LIB -DQT_QML_LIB -DQT_QUICKCONTROLS2_LIB -DQT_QUICK_LIB -DQT_WIDGETS_LIB -DUNICODE -DWIN32 -DWIN64 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -D_UNICODE -D_WIN64 @CMakeFiles/appMaster.dir/includes_CXX.rsp -g -std=gnu++17 -o CMakeFiles\\appMaster.dir\\src\\LogAggregator.cpp.obj -c C:\\Users\\28702\\Desktop\\Master\\1.software\\Master\\src\\LogAggregator.cpp",
+  "file": "C:/Users/28702/Desktop/Master/1.software/Master/src/LogAggregator.cpp",
+  "output": "CMakeFiles/appMaster.dir/src/LogAggregator.cpp.obj"
+},
+{
+  "directory": "C:/Users/28702/Desktop/Master/1.software/Master/build",
+  "command": "D:\\QT6\\Tools\\mingw1120_64\\bin\\g++.exe -DMINGW_HAS_SECURE_API=1 -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NEEDS_QMAIN -DQT_NETWORK_LIB -DQT_OPENGL_LIB -DQT_QMLBUILTINS_LIB -DQT_QMLINTEGRATION_LIB -DQT_QMLMODELS_LIB -DQT_QML_LIB -DQT_QUICKCONTROLS2_LIB -DQT_QUICK_LIB -DQT_WIDGETS_LIB -DUNICODE -DWIN32 -DWIN64 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -D_UNICODE -D_WIN64 @CMakeFiles/appMaster.dir/includes_CXX.rsp -g -std=gnu++17 -o CMakeFiles\\appMaster.dir\\src\\ProcessManager.cpp.obj -c C:\\Users\\28702\\Desktop\\Master\\1.software\\Master\\src\\ProcessManager.cpp",
+  "file": "C:/Users/28702/Desktop/Master/1.software/Master/src/ProcessManager.cpp",
+  "output": "CMakeFiles/appMaster.dir/src/ProcessManager.cpp.obj"
+},
+{
+  "directory": "C:/Users/28702/Desktop/Master/1.software/Master/build",
+  "command": "D:\\QT6\\Tools\\mingw1120_64\\bin\\g++.exe -DMINGW_HAS_SECURE_API=1 -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NEEDS_QMAIN -DQT_NETWORK_LIB -DQT_OPENGL_LIB -DQT_QMLBUILTINS_LIB -DQT_QMLINTEGRATION_LIB -DQT_QMLMODELS_LIB -DQT_QML_LIB -DQT_QUICKCONTROLS2_LIB -DQT_QUICK_LIB -DQT_WIDGETS_LIB -DUNICODE -DWIN32 -DWIN64 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -D_UNICODE -D_WIN64 @CMakeFiles/appMaster.dir/includes_CXX.rsp -g -std=gnu++17 -o CMakeFiles\\appMaster.dir\\src\\MainController.cpp.obj -c C:\\Users\\28702\\Desktop\\Master\\1.software\\Master\\src\\MainController.cpp",
+  "file": "C:/Users/28702/Desktop/Master/1.software/Master/src/MainController.cpp",
+  "output": "CMakeFiles/appMaster.dir/src/MainController.cpp.obj"
+},
+{
+  "directory": "C:/Users/28702/Desktop/Master/1.software/Master/build",
+  "command": "D:\\QT6\\Tools\\mingw1120_64\\bin\\g++.exe -DMINGW_HAS_SECURE_API=1 -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NEEDS_QMAIN -DQT_NETWORK_LIB -DQT_OPENGL_LIB -DQT_QMLBUILTINS_LIB -DQT_QMLINTEGRATION_LIB -DQT_QMLMODELS_LIB -DQT_QML_LIB -DQT_QUICKCONTROLS2_LIB -DQT_QUICK_LIB -DQT_WIDGETS_LIB -DUNICODE -DWIN32 -DWIN64 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -D_UNICODE -D_WIN64 @CMakeFiles/appMaster.dir/includes_CXX.rsp -g -std=gnu++17 -o CMakeFiles\\appMaster.dir\\src\\LocalSocketIpcCommunication.cpp.obj -c C:\\Users\\28702\\Desktop\\Master\\1.software\\Master\\src\\LocalSocketIpcCommunication.cpp",
+  "file": "C:/Users/28702/Desktop/Master/1.software/Master/src/LocalSocketIpcCommunication.cpp",
+  "output": "CMakeFiles/appMaster.dir/src/LocalSocketIpcCommunication.cpp.obj"
+},
+{
+  "directory": "C:/Users/28702/Desktop/Master/1.software/Master/build",
+  "command": "D:\\QT6\\Tools\\mingw1120_64\\bin\\g++.exe -DMINGW_HAS_SECURE_API=1 -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NEEDS_QMAIN -DQT_NETWORK_LIB -DQT_OPENGL_LIB -DQT_QMLBUILTINS_LIB -DQT_QMLINTEGRATION_LIB -DQT_QMLMODELS_LIB -DQT_QML_LIB -DQT_QUICKCONTROLS2_LIB -DQT_QUICK_LIB -DQT_WIDGETS_LIB -DUNICODE -DWIN32 -DWIN64 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -D_UNICODE -D_WIN64 @CMakeFiles/appMaster.dir/includes_CXX.rsp -g -std=gnu++17 -o CMakeFiles\\appMaster.dir\\src\\IpcCommunicationFactory.cpp.obj -c C:\\Users\\28702\\Desktop\\Master\\1.software\\Master\\src\\IpcCommunicationFactory.cpp",
+  "file": "C:/Users/28702/Desktop/Master/1.software/Master/src/IpcCommunicationFactory.cpp",
+  "output": "CMakeFiles/appMaster.dir/src/IpcCommunicationFactory.cpp.obj"
+},
+{
+  "directory": "C:/Users/28702/Desktop/Master/1.software/Master/build",
+  "command": "D:\\QT6\\Tools\\mingw1120_64\\bin\\g++.exe -DMINGW_HAS_SECURE_API=1 -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NEEDS_QMAIN -DQT_NETWORK_LIB -DQT_OPENGL_LIB -DQT_QMLBUILTINS_LIB -DQT_QMLINTEGRATION_LIB -DQT_QMLMODELS_LIB -DQT_QML_LIB -DQT_QUICKCONTROLS2_LIB -DQT_QUICK_LIB -DQT_WIDGETS_LIB -DUNICODE -DWIN32 -DWIN64 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -D_UNICODE -D_WIN64 @CMakeFiles/appMaster.dir/includes_CXX.rsp -g -std=gnu++17 -o CMakeFiles\\appMaster.dir\\src\\FileLogStorage.cpp.obj -c C:\\Users\\28702\\Desktop\\Master\\1.software\\Master\\src\\FileLogStorage.cpp",
+  "file": "C:/Users/28702/Desktop/Master/1.software/Master/src/FileLogStorage.cpp",
+  "output": "CMakeFiles/appMaster.dir/src/FileLogStorage.cpp.obj"
+},
+{
+  "directory": "C:/Users/28702/Desktop/Master/1.software/Master/build",
+  "command": "D:\\QT6\\Tools\\mingw1120_64\\bin\\g++.exe -DMINGW_HAS_SECURE_API=1 -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NEEDS_QMAIN -DQT_NETWORK_LIB -DQT_OPENGL_LIB -DQT_QMLBUILTINS_LIB -DQT_QMLINTEGRATION_LIB -DQT_QMLMODELS_LIB -DQT_QML_LIB -DQT_QUICKCONTROLS2_LIB -DQT_QUICK_LIB -DQT_WIDGETS_LIB -DUNICODE -DWIN32 -DWIN64 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -D_UNICODE -D_WIN64 @CMakeFiles/appMaster.dir/includes_CXX.rsp -g -std=gnu++17 -o CMakeFiles\\appMaster.dir\\src\\update_checker.cpp.obj -c C:\\Users\\28702\\Desktop\\Master\\1.software\\Master\\src\\update_checker.cpp",
+  "file": "C:/Users/28702/Desktop/Master/1.software/Master/src/update_checker.cpp",
+  "output": "CMakeFiles/appMaster.dir/src/update_checker.cpp.obj"
+},
+{
+  "directory": "C:/Users/28702/Desktop/Master/1.software/Master/build",
+  "command": "D:\\QT6\\Tools\\mingw1120_64\\bin\\g++.exe -DMINGW_HAS_SECURE_API=1 -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NEEDS_QMAIN -DQT_NETWORK_LIB -DQT_OPENGL_LIB -DQT_QMLBUILTINS_LIB -DQT_QMLINTEGRATION_LIB -DQT_QMLMODELS_LIB -DQT_QML_LIB -DQT_QUICKCONTROLS2_LIB -DQT_QUICK_LIB -DQT_WIDGETS_LIB -DUNICODE -DWIN32 -DWIN64 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -D_UNICODE -D_WIN64 @CMakeFiles/appMaster.dir/includes_CXX.rsp -g -std=gnu++17 -o CMakeFiles\\appMaster.dir\\src\\FolderDialogHelper.cpp.obj -c C:\\Users\\28702\\Desktop\\Master\\1.software\\Master\\src\\FolderDialogHelper.cpp",
+  "file": "C:/Users/28702/Desktop/Master/1.software/Master/src/FolderDialogHelper.cpp",
+  "output": "CMakeFiles/appMaster.dir/src/FolderDialogHelper.cpp.obj"
+},
+{
+  "directory": "C:/Users/28702/Desktop/Master/1.software/Master/build",
+  "command": "D:\\QT6\\Tools\\mingw1120_64\\bin\\g++.exe -DMINGW_HAS_SECURE_API=1 -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NEEDS_QMAIN -DQT_NETWORK_LIB -DQT_OPENGL_LIB -DQT_QMLBUILTINS_LIB -DQT_QMLINTEGRATION_LIB -DQT_QMLMODELS_LIB -DQT_QML_LIB -DQT_QUICKCONTROLS2_LIB -DQT_QUICK_LIB -DQT_WIDGETS_LIB -DUNICODE -DWIN32 -DWIN64 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -D_UNICODE -D_WIN64 @CMakeFiles/appMaster.dir/includes_CXX.rsp -g -std=gnu++17 -Wa,-mbig-obj -o CMakeFiles\\appMaster.dir\\appmaster_qmltyperegistrations.cpp.obj -c C:\\Users\\28702\\Desktop\\Master\\1.software\\Master\\build\\appmaster_qmltyperegistrations.cpp",
+  "file": "C:/Users/28702/Desktop/Master/1.software/Master/build/appmaster_qmltyperegistrations.cpp",
+  "output": "CMakeFiles/appMaster.dir/appmaster_qmltyperegistrations.cpp.obj"
+},
+{
+  "directory": "C:/Users/28702/Desktop/Master/1.software/Master/build",
+  "command": "D:\\QT6\\Tools\\mingw1120_64\\bin\\g++.exe -DMINGW_HAS_SECURE_API=1 -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NEEDS_QMAIN -DQT_NETWORK_LIB -DQT_OPENGL_LIB -DQT_QMLBUILTINS_LIB -DQT_QMLINTEGRATION_LIB -DQT_QMLMODELS_LIB -DQT_QML_LIB -DQT_QUICKCONTROLS2_LIB -DQT_QUICK_LIB -DQT_WIDGETS_LIB -DUNICODE -DWIN32 -DWIN64 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -D_UNICODE -D_WIN64 @CMakeFiles/appMaster.dir/includes_CXX.rsp -g -std=gnu++17 -o CMakeFiles\\appMaster.dir\\build\\.qt\\rcc\\qrc_qmake_Master.cpp.obj -c C:\\Users\\28702\\Desktop\\Master\\1.software\\Master\\build\\.qt\\rcc\\qrc_qmake_Master.cpp",
+  "file": "C:/Users/28702/Desktop/Master/1.software/Master/build/.qt/rcc/qrc_qmake_Master.cpp",
+  "output": "CMakeFiles/appMaster.dir/build/.qt/rcc/qrc_qmake_Master.cpp.obj"
+},
+{
+  "directory": "C:/Users/28702/Desktop/Master/1.software/Master/build",
+  "command": "D:\\QT6\\Tools\\mingw1120_64\\bin\\g++.exe -DMINGW_HAS_SECURE_API=1 -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NEEDS_QMAIN -DQT_NETWORK_LIB -DQT_OPENGL_LIB -DQT_QMLBUILTINS_LIB -DQT_QMLINTEGRATION_LIB -DQT_QMLMODELS_LIB -DQT_QML_LIB -DQT_QUICKCONTROLS2_LIB -DQT_QUICK_LIB -DQT_WIDGETS_LIB -DUNICODE -DWIN32 -DWIN64 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -D_UNICODE -D_WIN64 @CMakeFiles/appMaster.dir/includes_CXX.rsp -g -std=gnu++17 -o CMakeFiles\\appMaster.dir\\build\\.rcc\\qmlcache\\appMaster_qmlcache_loader.cpp.obj -c C:\\Users\\28702\\Desktop\\Master\\1.software\\Master\\build\\.rcc\\qmlcache\\appMaster_qmlcache_loader.cpp",
+  "file": "C:/Users/28702/Desktop/Master/1.software/Master/build/.rcc/qmlcache/appMaster_qmlcache_loader.cpp",
+  "output": "CMakeFiles/appMaster.dir/build/.rcc/qmlcache/appMaster_qmlcache_loader.cpp.obj"
+},
+{
+  "directory": "C:/Users/28702/Desktop/Master/1.software/Master/build",
+  "command": "D:\\QT6\\Tools\\mingw1120_64\\bin\\g++.exe -DMINGW_HAS_SECURE_API=1 -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NEEDS_QMAIN -DQT_NETWORK_LIB -DQT_OPENGL_LIB -DQT_QMLBUILTINS_LIB -DQT_QMLINTEGRATION_LIB -DQT_QMLMODELS_LIB -DQT_QML_LIB -DQT_QUICKCONTROLS2_LIB -DQT_QUICK_LIB -DQT_WIDGETS_LIB -DUNICODE -DWIN32 -DWIN64 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -D_UNICODE -D_WIN64 @CMakeFiles/appMaster.dir/includes_CXX.rsp -g -std=gnu++17 -o CMakeFiles\\appMaster.dir\\build\\.rcc\\qmlcache\\appMaster_qml\\Main_qml.cpp.obj -c C:\\Users\\28702\\Desktop\\Master\\1.software\\Master\\build\\.rcc\\qmlcache\\appMaster_qml\\Main_qml.cpp",
+  "file": "C:/Users/28702/Desktop/Master/1.software/Master/build/.rcc/qmlcache/appMaster_qml/Main_qml.cpp",
+  "output": "CMakeFiles/appMaster.dir/build/.rcc/qmlcache/appMaster_qml/Main_qml.cpp.obj"
+},
+{
+  "directory": "C:/Users/28702/Desktop/Master/1.software/Master/build",
+  "command": "D:\\QT6\\Tools\\mingw1120_64\\bin\\g++.exe -DMINGW_HAS_SECURE_API=1 -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NEEDS_QMAIN -DQT_NETWORK_LIB -DQT_OPENGL_LIB -DQT_QMLBUILTINS_LIB -DQT_QMLINTEGRATION_LIB -DQT_QMLMODELS_LIB -DQT_QML_LIB -DQT_QUICKCONTROLS2_LIB -DQT_QUICK_LIB -DQT_WIDGETS_LIB -DUNICODE -DWIN32 -DWIN64 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -D_UNICODE -D_WIN64 @CMakeFiles/appMaster.dir/includes_CXX.rsp -g -std=gnu++17 -o CMakeFiles\\appMaster.dir\\build\\.rcc\\qmlcache\\appMaster_qml\\Maincontroller_qml.cpp.obj -c C:\\Users\\28702\\Desktop\\Master\\1.software\\Master\\build\\.rcc\\qmlcache\\appMaster_qml\\Maincontroller_qml.cpp",
+  "file": "C:/Users/28702/Desktop/Master/1.software/Master/build/.rcc/qmlcache/appMaster_qml/Maincontroller_qml.cpp",
+  "output": "CMakeFiles/appMaster.dir/build/.rcc/qmlcache/appMaster_qml/Maincontroller_qml.cpp.obj"
+},
+{
+  "directory": "C:/Users/28702/Desktop/Master/1.software/Master/build",
+  "command": "D:\\QT6\\Tools\\mingw1120_64\\bin\\g++.exe -DMINGW_HAS_SECURE_API=1 -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NEEDS_QMAIN -DQT_NETWORK_LIB -DQT_OPENGL_LIB -DQT_QMLBUILTINS_LIB -DQT_QMLINTEGRATION_LIB -DQT_QMLMODELS_LIB -DQT_QML_LIB -DQT_QUICKCONTROLS2_LIB -DQT_QUICK_LIB -DQT_WIDGETS_LIB -DUNICODE -DWIN32 -DWIN64 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -D_UNICODE -D_WIN64 @CMakeFiles/appMaster.dir/includes_CXX.rsp -g -std=gnu++17 -o CMakeFiles\\appMaster.dir\\build\\.rcc\\qmlcache\\appMaster_qml\\Settings_qml.cpp.obj -c C:\\Users\\28702\\Desktop\\Master\\1.software\\Master\\build\\.rcc\\qmlcache\\appMaster_qml\\Settings_qml.cpp",
+  "file": "C:/Users/28702/Desktop/Master/1.software/Master/build/.rcc/qmlcache/appMaster_qml/Settings_qml.cpp",
+  "output": "CMakeFiles/appMaster.dir/build/.rcc/qmlcache/appMaster_qml/Settings_qml.cpp.obj"
+},
+{
+  "directory": "C:/Users/28702/Desktop/Master/1.software/Master/build",
+  "command": "D:\\QT6\\Tools\\mingw1120_64\\bin\\g++.exe -DMINGW_HAS_SECURE_API=1 -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NEEDS_QMAIN -DQT_NETWORK_LIB -DQT_OPENGL_LIB -DQT_QMLBUILTINS_LIB -DQT_QMLINTEGRATION_LIB -DQT_QMLMODELS_LIB -DQT_QML_LIB -DQT_QUICKCONTROLS2_LIB -DQT_QUICK_LIB -DQT_WIDGETS_LIB -DUNICODE -DWIN32 -DWIN64 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -D_UNICODE -D_WIN64 @CMakeFiles/appMaster.dir/includes_CXX.rsp -g -std=gnu++17 -o CMakeFiles\\appMaster.dir\\build\\.rcc\\qmlcache\\appMaster_qml\\WorkspaceSelector_qml.cpp.obj -c C:\\Users\\28702\\Desktop\\Master\\1.software\\Master\\build\\.rcc\\qmlcache\\appMaster_qml\\WorkspaceSelector_qml.cpp",
+  "file": "C:/Users/28702/Desktop/Master/1.software/Master/build/.rcc/qmlcache/appMaster_qml/WorkspaceSelector_qml.cpp",
+  "output": "CMakeFiles/appMaster.dir/build/.rcc/qmlcache/appMaster_qml/WorkspaceSelector_qml.cpp.obj"
+},
+{
+  "directory": "C:/Users/28702/Desktop/Master/1.software/Master/build",
+  "command": "D:\\QT6\\Tools\\mingw1120_64\\bin\\g++.exe -DMINGW_HAS_SECURE_API=1 -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NEEDS_QMAIN -DQT_NETWORK_LIB -DQT_OPENGL_LIB -DQT_QMLBUILTINS_LIB -DQT_QMLINTEGRATION_LIB -DQT_QMLMODELS_LIB -DQT_QML_LIB -DQT_QUICKCONTROLS2_LIB -DQT_QUICK_LIB -DQT_WIDGETS_LIB -DUNICODE -DWIN32 -DWIN64 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -D_UNICODE -D_WIN64 @CMakeFiles/appMaster.dir/includes_CXX.rsp -g -std=gnu++17 -o CMakeFiles\\appMaster.dir\\build\\.rcc\\qmlcache\\appMaster_qml\\UpdateNotificationCard_qml.cpp.obj -c C:\\Users\\28702\\Desktop\\Master\\1.software\\Master\\build\\.rcc\\qmlcache\\appMaster_qml\\UpdateNotificationCard_qml.cpp",
+  "file": "C:/Users/28702/Desktop/Master/1.software/Master/build/.rcc/qmlcache/appMaster_qml/UpdateNotificationCard_qml.cpp",
+  "output": "CMakeFiles/appMaster.dir/build/.rcc/qmlcache/appMaster_qml/UpdateNotificationCard_qml.cpp.obj"
+},
+{
+  "directory": "C:/Users/28702/Desktop/Master/1.software/Master/build",
+  "command": "D:\\QT6\\Tools\\mingw1120_64\\bin\\g++.exe -DMINGW_HAS_SECURE_API=1 -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NEEDS_QMAIN -DQT_NETWORK_LIB -DQT_OPENGL_LIB -DQT_QMLBUILTINS_LIB -DQT_QMLINTEGRATION_LIB -DQT_QMLMODELS_LIB -DQT_QML_LIB -DQT_QUICKCONTROLS2_LIB -DQT_QUICK_LIB -DQT_WIDGETS_LIB -DUNICODE -DWIN32 -DWIN64 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -D_UNICODE -D_WIN64 @CMakeFiles/appMaster.dir/includes_CXX.rsp -g -std=gnu++17 -o CMakeFiles\\appMaster.dir\\build\\.qt\\rcc\\qrc_appMaster_raw_qml_0.cpp.obj -c C:\\Users\\28702\\Desktop\\Master\\1.software\\Master\\build\\.qt\\rcc\\qrc_appMaster_raw_qml_0.cpp",
+  "file": "C:/Users/28702/Desktop/Master/1.software/Master/build/.qt/rcc/qrc_appMaster_raw_qml_0.cpp",
+  "output": "CMakeFiles/appMaster.dir/build/.qt/rcc/qrc_appMaster_raw_qml_0.cpp.obj"
+},
+{
+  "directory": "C:/Users/28702/Desktop/Master/1.software/Master/build/updater",
+  "command": "D:\\QT6\\Tools\\mingw1120_64\\bin\\g++.exe -DMINGW_HAS_SECURE_API=1 -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NEEDS_QMAIN -DQT_NETWORK_LIB -DQT_OPENGL_LIB -DQT_QMLBUILTINS_LIB -DQT_QMLINTEGRATION_LIB -DQT_QMLMODELS_LIB -DQT_QML_LIB -DQT_QUICK_LIB -DQT_WIDGETS_LIB -DUNICODE -DWIN32 -DWIN64 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -D_UNICODE -D_WIN64 @CMakeFiles/updater.dir/includes_CXX.rsp -g -std=gnu++17 -o CMakeFiles\\updater.dir\\updater_autogen\\mocs_compilation.cpp.obj -c C:\\Users\\28702\\Desktop\\Master\\1.software\\Master\\build\\updater\\updater_autogen\\mocs_compilation.cpp",
+  "file": "C:/Users/28702/Desktop/Master/1.software/Master/build/updater/updater_autogen/mocs_compilation.cpp",
+  "output": "updater/CMakeFiles/updater.dir/updater_autogen/mocs_compilation.cpp.obj"
+},
+{
+  "directory": "C:/Users/28702/Desktop/Master/1.software/Master/build/updater",
+  "command": "D:\\QT6\\Tools\\mingw1120_64\\bin\\g++.exe -DMINGW_HAS_SECURE_API=1 -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NEEDS_QMAIN -DQT_NETWORK_LIB -DQT_OPENGL_LIB -DQT_QMLBUILTINS_LIB -DQT_QMLINTEGRATION_LIB -DQT_QMLMODELS_LIB -DQT_QML_LIB -DQT_QUICK_LIB -DQT_WIDGETS_LIB -DUNICODE -DWIN32 -DWIN64 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -D_UNICODE -D_WIN64 @CMakeFiles/updater.dir/includes_CXX.rsp -g -std=gnu++17 -o CMakeFiles\\updater.dir\\src\\main.cpp.obj -c C:\\Users\\28702\\Desktop\\Master\\1.software\\Master\\updater\\src\\main.cpp",
+  "file": "C:/Users/28702/Desktop/Master/1.software/Master/updater/src/main.cpp",
+  "output": "updater/CMakeFiles/updater.dir/src/main.cpp.obj"
+},
+{
+  "directory": "C:/Users/28702/Desktop/Master/1.software/Master/build/updater",
+  "command": "D:\\QT6\\Tools\\mingw1120_64\\bin\\g++.exe -DMINGW_HAS_SECURE_API=1 -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NEEDS_QMAIN -DQT_NETWORK_LIB -DQT_OPENGL_LIB -DQT_QMLBUILTINS_LIB -DQT_QMLINTEGRATION_LIB -DQT_QMLMODELS_LIB -DQT_QML_LIB -DQT_QUICK_LIB -DQT_WIDGETS_LIB -DUNICODE -DWIN32 -DWIN64 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -D_UNICODE -D_WIN64 @CMakeFiles/updater.dir/includes_CXX.rsp -g -std=gnu++17 -o CMakeFiles\\updater.dir\\src\\updater.cpp.obj -c C:\\Users\\28702\\Desktop\\Master\\1.software\\Master\\updater\\src\\updater.cpp",
+  "file": "C:/Users/28702/Desktop/Master/1.software/Master/updater/src/updater.cpp",
+  "output": "updater/CMakeFiles/updater.dir/src/updater.cpp.obj"
+},
+{
+  "directory": "C:/Users/28702/Desktop/Master/1.software/Master/build/updater",
+  "command": "D:\\QT6\\Tools\\mingw1120_64\\bin\\g++.exe -DMINGW_HAS_SECURE_API=1 -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NEEDS_QMAIN -DQT_NETWORK_LIB -DQT_OPENGL_LIB -DQT_QMLBUILTINS_LIB -DQT_QMLINTEGRATION_LIB -DQT_QMLMODELS_LIB -DQT_QML_LIB -DQT_QUICK_LIB -DQT_WIDGETS_LIB -DUNICODE -DWIN32 -DWIN64 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -D_UNICODE -D_WIN64 @CMakeFiles/updater.dir/includes_CXX.rsp -g -std=gnu++17 -Wa,-mbig-obj -o CMakeFiles\\updater.dir\\updater_qmltyperegistrations.cpp.obj -c C:\\Users\\28702\\Desktop\\Master\\1.software\\Master\\build\\updater\\updater_qmltyperegistrations.cpp",
+  "file": "C:/Users/28702/Desktop/Master/1.software/Master/build/updater/updater_qmltyperegistrations.cpp",
+  "output": "updater/CMakeFiles/updater.dir/updater_qmltyperegistrations.cpp.obj"
+},
+{
+  "directory": "C:/Users/28702/Desktop/Master/1.software/Master/build/updater",
+  "command": "D:\\QT6\\Tools\\mingw1120_64\\bin\\g++.exe -DMINGW_HAS_SECURE_API=1 -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NEEDS_QMAIN -DQT_NETWORK_LIB -DQT_OPENGL_LIB -DQT_QMLBUILTINS_LIB -DQT_QMLINTEGRATION_LIB -DQT_QMLMODELS_LIB -DQT_QML_LIB -DQT_QUICK_LIB -DQT_WIDGETS_LIB -DUNICODE -DWIN32 -DWIN64 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -D_UNICODE -D_WIN64 @CMakeFiles/updater.dir/includes_CXX.rsp -g -std=gnu++17 -o CMakeFiles\\updater.dir\\.qt\\rcc\\qrc_qmake_Updater.cpp.obj -c C:\\Users\\28702\\Desktop\\Master\\1.software\\Master\\build\\updater\\.qt\\rcc\\qrc_qmake_Updater.cpp",
+  "file": "C:/Users/28702/Desktop/Master/1.software/Master/build/updater/.qt/rcc/qrc_qmake_Updater.cpp",
+  "output": "updater/CMakeFiles/updater.dir/.qt/rcc/qrc_qmake_Updater.cpp.obj"
+},
+{
+  "directory": "C:/Users/28702/Desktop/Master/1.software/Master/build/updater",
+  "command": "D:\\QT6\\Tools\\mingw1120_64\\bin\\g++.exe -DMINGW_HAS_SECURE_API=1 -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NEEDS_QMAIN -DQT_NETWORK_LIB -DQT_OPENGL_LIB -DQT_QMLBUILTINS_LIB -DQT_QMLINTEGRATION_LIB -DQT_QMLMODELS_LIB -DQT_QML_LIB -DQT_QUICK_LIB -DQT_WIDGETS_LIB -DUNICODE -DWIN32 -DWIN64 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -D_UNICODE -D_WIN64 @CMakeFiles/updater.dir/includes_CXX.rsp -g -std=gnu++17 -o CMakeFiles\\updater.dir\\.rcc\\qmlcache\\updater_qmlcache_loader.cpp.obj -c C:\\Users\\28702\\Desktop\\Master\\1.software\\Master\\build\\updater\\.rcc\\qmlcache\\updater_qmlcache_loader.cpp",
+  "file": "C:/Users/28702/Desktop/Master/1.software/Master/build/updater/.rcc/qmlcache/updater_qmlcache_loader.cpp",
+  "output": "updater/CMakeFiles/updater.dir/.rcc/qmlcache/updater_qmlcache_loader.cpp.obj"
+},
+{
+  "directory": "C:/Users/28702/Desktop/Master/1.software/Master/build/updater",
+  "command": "D:\\QT6\\Tools\\mingw1120_64\\bin\\g++.exe -DMINGW_HAS_SECURE_API=1 -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NEEDS_QMAIN -DQT_NETWORK_LIB -DQT_OPENGL_LIB -DQT_QMLBUILTINS_LIB -DQT_QMLINTEGRATION_LIB -DQT_QMLMODELS_LIB -DQT_QML_LIB -DQT_QUICK_LIB -DQT_WIDGETS_LIB -DUNICODE -DWIN32 -DWIN64 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -D_UNICODE -D_WIN64 @CMakeFiles/updater.dir/includes_CXX.rsp -g -std=gnu++17 -o CMakeFiles\\updater.dir\\.rcc\\qmlcache\\updater_qml\\UpdaterWindow_qml.cpp.obj -c C:\\Users\\28702\\Desktop\\Master\\1.software\\Master\\build\\updater\\.rcc\\qmlcache\\updater_qml\\UpdaterWindow_qml.cpp",
+  "file": "C:/Users/28702/Desktop/Master/1.software/Master/build/updater/.rcc/qmlcache/updater_qml/UpdaterWindow_qml.cpp",
+  "output": "updater/CMakeFiles/updater.dir/.rcc/qmlcache/updater_qml/UpdaterWindow_qml.cpp.obj"
+},
+{
+  "directory": "C:/Users/28702/Desktop/Master/1.software/Master/build/updater",
+  "command": "D:\\QT6\\Tools\\mingw1120_64\\bin\\g++.exe -DMINGW_HAS_SECURE_API=1 -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NEEDS_QMAIN -DQT_NETWORK_LIB -DQT_OPENGL_LIB -DQT_QMLBUILTINS_LIB -DQT_QMLINTEGRATION_LIB -DQT_QMLMODELS_LIB -DQT_QML_LIB -DQT_QUICK_LIB -DQT_WIDGETS_LIB -DUNICODE -DWIN32 -DWIN64 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -D_UNICODE -D_WIN64 @CMakeFiles/updater.dir/includes_CXX.rsp -g -std=gnu++17 -o CMakeFiles\\updater.dir\\.qt\\rcc\\qrc_updater_raw_qml_0.cpp.obj -c C:\\Users\\28702\\Desktop\\Master\\1.software\\Master\\build\\updater\\.qt\\rcc\\qrc_updater_raw_qml_0.cpp",
+  "file": "C:/Users/28702/Desktop/Master/1.software/Master/build/updater/.qt/rcc/qrc_updater_raw_qml_0.cpp",
+  "output": "updater/CMakeFiles/updater.dir/.qt/rcc/qrc_updater_raw_qml_0.cpp.obj"
+},
+{
+  "directory": "C:/Users/28702/Desktop/Master/1.software/Master/build/updater",
+  "command": "D:\\QT6\\Tools\\mingw1120_64\\bin\\g++.exe -DMINGW_HAS_SECURE_API=1 -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NEEDS_QMAIN -DQT_NETWORK_LIB -DQT_OPENGL_LIB -DQT_QMLBUILTINS_LIB -DQT_QMLINTEGRATION_LIB -DQT_QMLMODELS_LIB -DQT_QML_LIB -DQT_QUICK_LIB -DQT_WIDGETS_LIB -DUNICODE -DWIN32 -DWIN64 -D_ENABLE_EXTENDED_ALIGNED_STORAGE -D_UNICODE -D_WIN64 @CMakeFiles/updater.dir/includes_CXX.rsp -g -std=gnu++17 -o CMakeFiles\\updater.dir\\updater_autogen\\EWIEGA46WW\\qrc_updater.cpp.obj -c C:\\Users\\28702\\Desktop\\Master\\1.software\\Master\\build\\updater\\updater_autogen\\EWIEGA46WW\\qrc_updater.cpp",
+  "file": "C:/Users/28702/Desktop/Master/1.software/Master/build/updater/updater_autogen/EWIEGA46WW/qrc_updater.cpp",
+  "output": "updater/CMakeFiles/updater.dir/updater_autogen/EWIEGA46WW/qrc_updater.cpp.obj"
+}
+]
