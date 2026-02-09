@@ -39,6 +39,8 @@ qt_add_executable(JT_Studio
     src/update_checker.cpp
     src/FolderDialogHelper.h
     src/FolderDialogHelper.cpp
+    src/PluginManager.h
+    src/PluginManager.cpp
 )
 
 qt_add_qml_module(JT_Studio
@@ -47,9 +49,9 @@ qt_add_qml_module(JT_Studio
     QML_FILES
         qml/Main.qml
         qml/Maincontroller.qml
-        qml/Settings.qml
         qml/WorkspaceSelector.qml
         qml/UpdateNotificationCard.qml
+        qml/PluginDetailView.qml
 )
 
 set_target_properties(JT_Studio PROPERTIES

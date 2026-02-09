@@ -8,7 +8,6 @@ import Master 1.0 // 导入 Master 模块以使用 FolderDialogHelper
 Rectangle {
     id: workspaceSelectorRoot
     color: "#1e1e1e"
-    // 移除 anchors.fill: parent，让 StackView 管理大小
     width: parent.width
     height: parent.height
 
@@ -48,21 +47,13 @@ Rectangle {
             // 公司名称（中文）
             Text {
                 Layout.alignment: Qt.AlignHCenter
-                text: "长沙创新中心"
+                text: "嘉腾机器人集成工作台"
                 color: "#cccccc"
                 font.pixelSize: 16
                 font.bold: true
-                font.family: "Microsoft YaHei, SimHei"
+                font.family: "Source Han Sans, Microsoft YaHei, SimHei"
             }
 
-            // 公司名称（英文）
-            Text {
-                Layout.alignment: Qt.AlignHCenter
-                text: "Changsha Innovation Center"
-                color: "#999999"
-                font.pixelSize: 12
-                font.family: "Arial"
-            }
 
             // 分隔线
             Rectangle {
@@ -81,7 +72,7 @@ Rectangle {
 
             background: Rectangle {
                 color: "#2d2d30"
-                border.color: "#3e3e42"
+                border.color: "transparent"
                 border.width: 1
                 radius: 8
             }
@@ -89,15 +80,17 @@ Rectangle {
             label: Text {
                 text: "最近使用的工作区"
                 color: "#cccccc"
-                font.pixelSize: 16
+                font.pixelSize: 13
                 font.bold: true
+                font.family: "Source Han Sans, Microsoft YaHei, SimHei"
                 leftPadding: 10
+                topPadding: 10
             }
 
             ColumnLayout {
                 anchors.fill: parent
-                anchors.margins: 15
-                spacing: 10
+                anchors.margins: 0
+                spacing: 0
 
                 ScrollView {
                     Layout.fillWidth: true
@@ -131,20 +124,6 @@ Rectangle {
                                 anchors.fill: parent
                                 anchors.margins: 10
                                 spacing: 12
-
-                                // 文件夹图标
-                                Rectangle {
-                                    width: 24
-                                    height: 24
-                                    color: "#007acc"
-                                    radius: 3
-
-                                    Text {
-                                        anchors.centerIn: parent
-                                        text: "📁"
-                                        font.pixelSize: 14
-                                    }
-                                }
 
                                 // 目录信息
                                 ColumnLayout {
@@ -253,24 +232,61 @@ Rectangle {
 
             // 浏览文件夹按钮
             Button {
-                text: "📁 浏览文件夹"
-                Layout.preferredWidth: 150
+                text: "浏览文件夹"
+                Layout.preferredWidth: 100
                 Layout.preferredHeight: 40
 
                 background: Rectangle {
-                    color: parent.hovered ? "#007acc" : "#005a9e"
+                    color: parent.hovered ? "#4a4a4a" : "#3d3d3d"
                     radius: 6
-                    border.color: "#007acc"
+                    border.color: parent.hovered ? "#5a5a5a" : "#3d3d3d"
                     border.width: 1
                 }
 
-                contentItem: Text {
-                    text: parent.text
-                    color: "white"
-                    font.pixelSize: 13
-                    font.bold: true
-                    horizontalAlignment: Text.AlignHCenter
-                    verticalAlignment: Text.AlignVCenter
+                contentItem: RowLayout {
+                    spacing: 8
+                    anchors.centerIn: parent
+
+                    Canvas {
+                        Layout.preferredWidth: 16
+                        Layout.preferredHeight: 16
+
+                        onPaint: {
+                            var ctx = getContext("2d");
+                            ctx.reset();
+                            ctx.strokeStyle = "#ffffff";
+                            ctx.fillStyle = "#ffffff";
+                            ctx.lineWidth = 1.5;
+                            ctx.lineCap = "round";
+                            ctx.lineJoin = "round";
+
+                            // 绘制文件夹图标
+                            // 文件夹顶部标签
+                            ctx.beginPath();
+                            ctx.moveTo(2, 4);
+                            ctx.lineTo(6, 4);
+                            ctx.lineTo(8, 6);
+                            ctx.lineTo(2, 6);
+                            ctx.stroke();
+
+                            // 文件夹主体
+                            ctx.beginPath();
+                            ctx.moveTo(2, 6);
+                            ctx.lineTo(2, 14);
+                            ctx.lineTo(14, 14);
+                            ctx.lineTo(14, 6);
+                            ctx.lineTo(8, 6);
+                            ctx.stroke();
+                        }
+                    }
+
+                    Text {
+                        text: parent.parent.text
+                        color: "white"
+                        font.pixelSize: 13
+                        font.bold: true
+                        font.family: "Source Han Sans, Microsoft YaHei, SimHei"
+                    }
                 }
 
                 onClicked: {
@@ -280,24 +296,61 @@ Rectangle {
 
             // 手动输入按钮
             Button {
-                text: "✏️ 手动输入"
-                Layout.preferredWidth: 150
+                text: "手动输入"
+                Layout.preferredWidth: 100
                 Layout.preferredHeight: 40
 
                 background: Rectangle {
-                    color: parent.hovered ? "#4CAF50" : "#388E3C"
+                    color: parent.hovered ? "#4a4a4a" : "#3d3d3d"
                     radius: 6
-                    border.color: "#4CAF50"
+                    border.color: parent.hovered ? "#5a5a5a" : "#3d3d3d"
                     border.width: 1
                 }
 
-                contentItem: Text {
-                    text: parent.text
-                    color: "white"
-                    font.pixelSize: 13
-                    font.bold: true
-                    horizontalAlignment: Text.AlignHCenter
-                    verticalAlignment: Text.AlignVCenter
+                contentItem: RowLayout {
+                    spacing: 8
+                    anchors.centerIn: parent
+
+                    Canvas {
+                        Layout.preferredWidth: 16
+                        Layout.preferredHeight: 16
+
+                        onPaint: {
+                            var ctx = getContext("2d");
+                            ctx.reset();
+                            ctx.strokeStyle = "#ffffff";
+                            ctx.fillStyle = "#ffffff";
+                            ctx.lineWidth = 1.5;
+                            ctx.lineCap = "round";
+                            ctx.lineJoin = "round";
+
+                            // 绘制编辑/输入图标（类似铅笔）
+                            // 笔的杆
+                            ctx.beginPath();
+                            ctx.moveTo(10, 3);
+                            ctx.lineTo(3, 10);
+                            ctx.lineTo(5, 12);
+                            ctx.lineTo(12, 5);
+                            ctx.closePath();
+                            ctx.stroke();
+
+                            // 笔的尖端
+                            ctx.beginPath();
+                            ctx.moveTo(3, 10);
+                            ctx.lineTo(2, 13);
+                            ctx.lineTo(5, 12);
+                            ctx.closePath();
+                            ctx.fill();
+                        }
+                    }
+
+                    Text {
+                        text: parent.parent.text
+                        color: "white"
+                        font.pixelSize: 13
+                        font.bold: true
+                        font.family: "Source Han Sans, Microsoft YaHei, SimHei"
+                    }
                 }
 
                 onClicked: {
@@ -305,16 +358,31 @@ Rectangle {
                 }
             }
         }
+    }
 
-        // 底部信息
+    // 底部信息容器 - 固定在页面最底部
+    ColumnLayout {
+        anchors.bottom: parent.bottom
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.margins: 20
+        spacing: 5
+
         Text {
             Layout.alignment: Qt.AlignHCenter
-            text: "选择工作目录后，系统将在该目录下管理项目配置和日志文件"
-            color: "#666666"
-            font.pixelSize: 11
-            horizontalAlignment: Text.AlignHCenter
-            wrapMode: Text.WordWrap
-            Layout.maximumWidth: 400
+            text: "嘉腾长沙创新中心"
+            color: '#ffffff'
+            font.pixelSize: 16
+            font.bold: true
+            font.family: "Source Han Sans, Microsoft YaHei, SimHei"
+        }
+
+        Text {
+            Layout.alignment: Qt.AlignHCenter
+            text: "Jaten Changsha Innovation Center"
+            color: "#999999"
+            font.pixelSize: 12
+            font.family: "Arial"
         }
     }
 

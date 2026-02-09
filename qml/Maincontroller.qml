@@ -17,7 +17,6 @@ import Qt5Compat.GraphicalEffects
 Rectangle {
     id: mainControllerRoot // 为根组件添加ID
     color: "#ffffff"
-    // 移除 anchors.fill: parent，让 StackView 管理大小
     width: parent.width
     height: parent.height
 
@@ -28,11 +27,12 @@ Rectangle {
     property string currentSystemStatus: "空闲"
     property var processStatusList: []
     property var ipList: []
+    property var pluginList: [] // 插件列表
     property string currentWorkspacePath: ""
     property string selectedProcess: "" // 当前选中的进程
     property bool secondarySidebarCollapsed: false // 次级侧边栏是否收起
     property int secondarySidebarWidth: 280 // 次级侧边栏展开宽度
-    property string sideBarCurrentTab: "processes" // 侧边栏当前标签页
+    property string sideBarCurrentTab: "ip_list" // 侧边栏当前标签页: "ip_list" 或 "plugins"
 
     onCurrentWorkspacePathChanged: {
         if (currentWorkspacePath) {
@@ -226,15 +226,157 @@ Rectangle {
                                 }
                             }
                             
-                            ToolTip.visible: containsMouse
-                            ToolTip.text: modelData.name + "\n状态: " + modelData.status
-                            ToolTip.delay: 500
                         }
 
                         Behavior on color {
                             ColorAnimation {
                                 duration: 200
                             }
+                        }
+                    }
+                }
+
+                // 分隔线
+                Rectangle {
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: 1
+                    color: "#3e3e42"
+                    Layout.topMargin: 4
+                    Layout.bottomMargin: 4
+                }
+
+                Rectangle {
+                    Layout.preferredWidth: 56
+                    Layout.preferredHeight: 56
+                    color: {
+                        if (selectedProcess === "插件商店") {
+                            return "#37373d"
+                        } else if (pluginStoreMouseArea.containsMouse) {
+                            return "#2a2d2e"
+                        } else {
+                            return "transparent"
+                        }
+                    }
+
+                    // 左侧选中指示器
+                    Rectangle {
+                        anchors.left: parent.left
+                        anchors.top: parent.top
+                        anchors.bottom: parent.bottom
+                        width: 2
+                        color: "#007acc"
+                        visible: selectedProcess === "插件商店"
+                    }
+
+                    // Canvas图标容器
+                    Item {
+                        anchors.centerIn: parent
+                        width: 32
+                        height: 32
+
+                        Canvas {
+                            id: pluginStoreIcon
+                            anchors.fill: parent
+                            
+                            property bool isHovered: pluginStoreMouseArea.containsMouse
+                            property bool isSelected: selectedProcess === "插件商店"
+                            
+                            onIsHoveredChanged: requestPaint()
+                            onIsSelectedChanged: requestPaint()
+                            
+                            onPaint: {
+                                var ctx = getContext("2d");
+                                ctx.reset();
+                                ctx.clearRect(0, 0, width, height);
+                                
+                                // 设置基础颜色
+                                var baseColor = isHovered || isSelected ? "#007acc" : "#ffffff";
+                                var accentColor = isHovered || isSelected ? "#4fc1ff" : "#e8e8e8";
+                                
+                                ctx.lineWidth = 1.5;
+                                ctx.lineCap = "round";
+                                ctx.lineJoin = "round";
+                                
+                                // 绘制VSCode风格插件商店图标
+                                drawVSCodePluginIcon(ctx, baseColor, accentColor);
+                            }
+                            
+                            // 绘制VSCode风格的插件商店图标：网格+星号
+                            function drawVSCodePluginIcon(ctx, baseColor, accentColor) {
+                                // 绘制3个彩色方块（代表不同的插件）- 左上、右上、下面
+                                var blockSize = 5;
+                                var spacing = 2;
+                                
+                                // 左上方块 - 蓝色系
+                                ctx.fillStyle = baseColor;
+                                ctx.fillRect(6, 6, blockSize, blockSize);
+                                
+                                // 右上方块 - 绿色系
+                                ctx.fillStyle = accentColor;
+                                ctx.globalAlpha = 0.8;
+                                ctx.fillRect(6 + blockSize + spacing, 6, blockSize, blockSize);
+                                ctx.globalAlpha = 1;
+                                
+                                // 左下方块 - 紫色系
+                                ctx.fillStyle = accentColor;
+                                ctx.globalAlpha = 0.6;
+                                ctx.fillRect(6, 6 + blockSize + spacing, blockSize, blockSize);
+                                ctx.globalAlpha = 1;
+                                
+                                // 右下方块（主要块）- 更大更突出
+                                ctx.fillStyle = baseColor;
+                                ctx.globalAlpha = 0.9;
+                                ctx.fillRect(6 + blockSize + spacing, 6 + blockSize + spacing, blockSize + 1, blockSize + 1);
+                                ctx.globalAlpha = 1;
+                                
+                                // 添加星号标记在右下方块的右上角（表示推荐）
+                                ctx.strokeStyle = baseColor;
+                                ctx.fillStyle = baseColor;
+                                var starX = 6 + blockSize + spacing + blockSize + 1 + 2;
+                                var starY = 6 - 2;
+                                drawStar(ctx, starX, starY, 2);
+                            }
+                            
+                            // 绘制小星号
+                            function drawStar(ctx, cx, cy, r) {
+                                var points = 5;
+                                var outerRadius = r;
+                                var innerRadius = r * 0.4;
+                                
+                                ctx.beginPath();
+                                for (var i = 0; i < points * 2; i++) {
+                                    var radius = i % 2 === 0 ? outerRadius : innerRadius;
+                                    var angle = (i * Math.PI) / points - Math.PI / 2;
+                                    var x = cx + Math.cos(angle) * radius;
+                                    var y = cy + Math.sin(angle) * radius;
+                                    if (i === 0) ctx.moveTo(x, y);
+                                    else ctx.lineTo(x, y);
+                                }
+                                ctx.closePath();
+                                ctx.fill();
+                            }
+                        }
+                    }
+
+                    MouseArea {
+                        id: pluginStoreMouseArea
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        
+                        onClicked: {
+                            console.log("[QML] 点击插件商店");
+                            selectedProcess = "插件商店";
+                            secondarySidebarCollapsed = false;
+                            sideBarCurrentTab = "plugins";
+                            // 加载插件列表
+                            loadPluginsFromUrl();
+                        }
+                        
+                    }
+
+                    Behavior on color {
+                        ColorAnimation {
+                            duration: 200
                         }
                     }
                 }
@@ -276,6 +418,7 @@ Rectangle {
                     color: "#2c2c2c"
                     Layout.fillWidth: true
                     Layout.fillHeight: true
+                    visible: sideBarCurrentTab === "ip_list"
 
                     ColumnLayout {
                         anchors.fill: parent
@@ -337,10 +480,6 @@ Rectangle {
                                         anchors.fill: parent
                                         hoverEnabled: true
                                         onClicked: newIpDialog.visible = true
-
-                                        ToolTip.visible: containsMouse
-                                        ToolTip.text: "添加单个IP地址"
-                                        ToolTip.delay: 500
                                     }
 
                                     Behavior on color {
@@ -384,10 +523,6 @@ Rectangle {
                                         anchors.fill: parent
                                         hoverEnabled: true
                                         onClicked: batchAddIpDialog.visible = true
-
-                                        ToolTip.visible: containsMouse
-                                        ToolTip.text: "批量添加IP地址"
-                                        ToolTip.delay: 500
                                     }
 
                                     Behavior on color {
@@ -408,6 +543,104 @@ Rectangle {
                                 clip: true
                                 model: ipList
                                 delegate: sidebarIpDelegate
+                                spacing: 2
+
+                                highlight: Rectangle {
+                                    color: "#094771"
+                                    radius: 3
+                                }
+                                highlightMoveDuration: 150
+                            }
+                        }
+                    }
+                }
+
+                // 插件列表视图
+                Rectangle {
+                    color: "#2c2c2c"
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    visible: sideBarCurrentTab === "plugins"
+
+                    ColumnLayout {
+                        anchors.fill: parent
+                        anchors.margins: 8
+                        spacing: 8
+
+                        RowLayout {
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: 35
+
+                            Text {
+                                text: "插件列表"
+                                color: "#cccccc"
+                                font.pixelSize: 12
+                                font.bold: true
+                                Layout.fillWidth: true
+                                verticalAlignment: Text.AlignVCenter
+                            }
+
+                            // 刷新按钮
+                            Rectangle {
+                                id: refreshPluginsBtn
+                                Layout.preferredWidth: 32
+                                Layout.preferredHeight: 32
+                                radius: 6
+                                color: refreshPluginsBtnMouseArea.containsMouse ? "#0078d4" : "#3e3e42"
+
+                                Canvas {
+                                    anchors.fill: parent
+                                    onPaint: {
+                                        var ctx = getContext("2d");
+                                        ctx.reset();
+
+                                        ctx.strokeStyle = "#ffffff";
+                                        ctx.lineWidth = 2;
+                                        ctx.lineCap = "round";
+                                        ctx.lineJoin = "round";
+
+                                        // 绘制刷新图标
+                                        var cx = 16, cy = 16;
+                                        var r = 5;
+                                        
+                                        // 绘制圆形
+                                        ctx.beginPath();
+                                        ctx.arc(cx, cy, r, 0.5, Math.PI * 2 - 0.5);
+                                        ctx.stroke();
+
+                                        // 绘制箭头
+                                        ctx.beginPath();
+                                        ctx.moveTo(cx + r - 1, cy - r);
+                                        ctx.lineTo(cx + r + 2, cy - r);
+                                        ctx.lineTo(cx + r, cy - r - 3);
+                                        ctx.stroke();
+                                    }
+                                }
+
+                                MouseArea {
+                                    id: refreshPluginsBtnMouseArea
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    onClicked: loadPluginsFromUrl()
+                                }
+
+                                Behavior on color {
+                                    ColorAnimation {
+                                        duration: 200
+                                    }
+                                }
+                            }
+                        }
+
+                        ScrollView {
+                            Layout.fillWidth: true
+                            Layout.fillHeight: true
+
+                            ListView {
+                                id: sidebarPluginListView
+                                clip: true
+                                model: pluginList
+                                delegate: sidebarPluginDelegate
                                 spacing: 2
 
                                 highlight: Rectangle {
@@ -670,10 +903,6 @@ Rectangle {
                                 verticalAlignment: Text.AlignVCenter
                             }
                             onClicked: logPanelExpanded = !logPanelExpanded
-
-                            ToolTip.visible: hovered
-                            ToolTip.text: logPanelExpanded ? "折叠日志" : "展开日志"
-                            ToolTip.delay: 500
                         }
                     }
                 }
@@ -982,6 +1211,124 @@ Rectangle {
                             removeIpAddress(index);
                         }
                     }
+                }
+            }
+        }
+    }
+
+    // 插件列表Delegate
+    Component {
+        id: sidebarPluginDelegate
+
+        Rectangle {
+            width: ListView.view ? ListView.view.width : 0
+            height: 70
+            color: (ListView.view && ListView.isCurrentItem) ? "#094771" : (pluginMouseArea.containsMouse ? "#37373d" : "transparent")
+            radius: 3
+
+            MouseArea {
+                id: pluginMouseArea
+                anchors.fill: parent
+                hoverEnabled: true
+                onClicked: {
+                    sidebarPluginListView.currentIndex = index;
+                }
+            }
+
+            ColumnLayout {
+                anchors.fill: parent
+                anchors.margins: 8
+                spacing: 4
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: 8
+
+                    // 插件图标
+                    Rectangle {
+                        Layout.preferredWidth: 32
+                        Layout.preferredHeight: 32
+                        radius: 4
+                        color: "#3e3e42"
+
+                        Text {
+                            anchors.centerIn: parent
+                            text: modelData.name ? modelData.name.charAt(0).toUpperCase() : "P"
+                            color: "#ffffff"
+                            font.bold: true
+                            font.pixelSize: 14
+                        }
+                    }
+
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        spacing: 2
+
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: 8
+
+                            Text {
+                                text: modelData.name || "未知插件"
+                                color: "#e0e0e0"
+                                font.pixelSize: 12
+                                font.bold: true
+                                Layout.fillWidth: true
+                                elide: Text.ElideRight
+                            }
+
+                            // 类别标签
+                            Rectangle {
+                                Layout.preferredHeight: 16
+                                Layout.preferredWidth: categoryText.width + 6
+                                radius: 3
+                                color: "#3e4444"
+
+                                Text {
+                                    id: categoryText
+                                    anchors.centerIn: parent
+                                    text: modelData.category || "通用"
+                                    color: "#70d8ff"
+                                    font.pixelSize: 9
+                                }
+                            }
+                        }
+
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: 12
+
+                            Text {
+                                text: (modelData.version || "v1.0.0")
+                                color: "#888888"
+                                font.pixelSize: 10
+                            }
+
+                            Text {
+                                text: modelData.author || "Unknown"
+                                color: "#888888"
+                                font.pixelSize: 10
+                                Layout.fillWidth: true
+                                elide: Text.ElideRight
+                            }
+
+                            // 文件大小
+                            Text {
+                                text: formatFileSize(modelData.download_size || 0)
+                                color: "#666666"
+                                font.pixelSize: 9
+                            }
+                        }
+                    }
+                }
+
+                Text {
+                    text: modelData.description || "暂无描述"
+                    color: "#a0a0a0"
+                    font.pixelSize: 10
+                    Layout.fillWidth: true
+                    elide: Text.ElideRight
+                    maximumLineCount: 1
                 }
             }
         }
@@ -2525,6 +2872,87 @@ Rectangle {
     /**
     * @brief 通知子进程选定的IP
     */
+    /**
+    * @brief 格式化文件大小为易读的形式
+    * @param bytes 字节数
+    * @return 格式化的文件大小字符串
+    */
+    function formatFileSize(bytes) {
+        if (bytes === 0) return "0 B";
+        var k = 1024;
+        var sizes = ["B", "KB", "MB", "GB"];
+        var i = Math.floor(Math.log(bytes) / Math.log(k));
+        return (bytes / Math.pow(k, i)).toFixed(2) + " " + sizes[i];
+    }
+
+    /**
+    * @brief 从URL加载插件列表
+    */
+    function loadPluginsFromUrl() {
+        var xhr = new XMLHttpRequest();
+        xhr.timeout = 5000; // 5秒超时
+        
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState === XMLHttpRequest.DONE) {
+                if (xhr.status === 200) {
+                    try {
+                        var data = JSON.parse(xhr.responseText);
+                        console.log("[QML] 插件列表加载成功，共 " + data.plugins.length + " 个插件");
+                        
+                        // 将数据转换为QML可用的格式
+                        var pluginArray = [];
+                        for (var i = 0; i < data.plugins.length; i++) {
+                            pluginArray.push({
+                                id: data.plugins[i].id,
+                                name: data.plugins[i].name,
+                                version: data.plugins[i].version,
+                                author: data.plugins[i].author,
+                                description: data.plugins[i].description,
+                                detailed_description: data.plugins[i].detailed_description,
+                                category: data.plugins[i].category,
+                                download_url: data.plugins[i].download_url,
+                                download_size: data.plugins[i].download_size,
+                                executable: data.plugins[i].executable,
+                                required_version: data.plugins[i].required_version,
+                                icon_type: data.plugins[i].icon_type || "default",
+                                dependencies: data.plugins[i].dependencies || [],
+                                screenshots: data.plugins[i].screenshots || []
+                            });
+                        }
+                        pluginList = pluginArray;
+                        appendLog("插件列表加载成功，共 " + pluginArray.length + " 个插件");
+                    } catch (e) {
+                        console.log("[QML] 插件JSON解析错误: " + e.message);
+                        appendLog("插件列表解析失败: " + e.message);
+                    }
+                } else {
+                    console.log("[QML] 加载插件列表失败，状态码: " + xhr.status);
+                    appendLog("加载插件列表失败，状态码: " + xhr.status);
+                }
+            }
+        };
+        
+        xhr.onerror = function() {
+            console.log("[QML] 加载插件列表网络错误");
+            appendLog("加载插件列表网络错误");
+        };
+        
+        xhr.ontimeout = function() {
+            console.log("[QML] 加载插件列表超时");
+            appendLog("加载插件列表超时");
+        };
+        
+        try {
+            console.log("[QML] 开始加载插件列表...");
+            appendLog("正在加载插件列表...");
+            xhr.open("GET", "https://jts-tools-extensions.oss-cn-chengdu.aliyuncs.com/plugins.json", true);
+            xhr.send();
+        } catch (e) {
+            console.log("[QML] 加载插件列表异常: " + e.message);
+            appendLog("加载插件列表异常: " + e.message);
+        }
+    }
+
     function notifyIpSelection(selectedIp) {
         if (mainController) {
             try {

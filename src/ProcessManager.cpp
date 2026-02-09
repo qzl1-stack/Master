@@ -311,7 +311,7 @@ QStringList ProcessManager::GetRunningProcessList() const
     
     QStringList running_processes;
     for (auto it = process_info_map_.constBegin(); it != process_info_map_.constEnd(); ++it) {
-        if (it->status == kRunning) {
+        if (it->status == kStarting || it->status == kRunning) {
             running_processes.append(it.key());
         }
     }

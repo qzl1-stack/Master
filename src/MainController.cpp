@@ -5,6 +5,7 @@
 #include "ILogStorage.h"
 #include "IIpcCommunication.h"
 #include "update_checker.h"
+#include "PluginManager.h"
 #include <QUuid>
 #include <QFile>
 #include <QDebug>
@@ -60,11 +61,6 @@ MainController::MainController(QObject* parent)
 MainController::~MainController()
 {
     qDebug() << "[MainController] 析构函数调用";
-    
-    // 停止系统（如果还在运行）
-    // if (initialization_state_ == kStarted) {
-        // Stop();
-    // }
     
     // 清理资源
     CleanupSystemResources();
@@ -382,6 +378,11 @@ IpcContext* MainController::GetIpcContext() const
 UpdateChecker* MainController::GetUpdateChecker() const
 {
     return update_checker_.get();
+}
+
+QObject* MainController::GetPluginManager() const
+{
+    return &PluginManager::GetInstance();
 }
 
 // ==================== 业务流程接口 ====================
@@ -1011,15 +1012,6 @@ void MainController::HandleIpcMessage(const IpcMessage& message)
         case MessageType::kHeartbeat:
             HandleHeartbeatMessage(message);
             break;
-        case MessageType::kLogMessage:
-            HandleLogMessage(message);
-            break;
-        case MessageType::kErrorReport:
-            HandleErrorReportMessage(message);
-            break;
-        case MessageType::kCommandResponse:
-            HandleCommandResponseMessage(message);
-            break;
         default:
             qDebug() << "[MainController] 未处理的消息类型:" << static_cast<int>(message.type);
             break;
@@ -1091,25 +1083,6 @@ void MainController::HandleConfigurationFileChanged(const QString& file_path)
     }
     
     emit ConfigurationFileChanged(file_path, "modified");
-}
-
-void MainController::HandleLogMessage(const LogEntry& log_entry)
-{
-    // 转发到LogAggregator
-    if (log_aggregator_) {
-        log_aggregator_->writeLog(log_entry);
-    }
-    
-    // 更新DataStore中的最新日志信息
-    if (data_store_) {
-        QString log_key = QString("logs.latest.%1").arg(log_entry.source_process);
-        QJsonObject log_info;
-        log_info["level"] = static_cast<int>(log_entry.level);
-        log_info["message"] = log_entry.message;
-        log_info["timestamp"] = log_entry.timestamp.toString(Qt::ISODate);
-        log_info["thread_id"] = log_entry.thread_id;
-        data_store_->setValue(log_key, log_info);
-    }
 }
 
 void MainController::PerformSystemHealthCheck()
@@ -1248,6 +1221,15 @@ bool MainController::InitializeCoreModules()
         }
 
         qDebug() << "[MainController] UpdateChecker初始化完成";
+        
+        // 6. 初始化PluginManager
+        qDebug() << "[MainController] 初始化PluginManager...";
+        PluginManager& plugin_manager = PluginManager::GetInstance();
+        if (!plugin_manager.Initialize()) {
+            qWarning() << "[MainController] PluginManager初始化失败";
+            // 插件管理器初始化失败不影响主程序启动，仅记录警告
+        }
+        qDebug() << "[MainController] PluginManager初始化完成";
 
         return true;
         
@@ -1629,71 +1611,6 @@ void MainController::HandleHeartbeatMessage(const IpcMessage& message)
     }
 }
 
-
-
-void MainController::HandleLogMessage(const IpcMessage& message)
-{
-    // 从IPC消息构造LogEntry
-    LogEntry log_entry = LogEntry::create(
-        static_cast<LogLevel>(message.body["level"].toInt()),
-        LogCategory::kBusiness,
-        message.sender_id,
-        message.body["message"].toString(),
-        QString(), // module_name
-        message.body["function_name"].toString(),
-        message.body["line_number"].toInt()
-    );
-
-    // 设置其他属性
-    log_entry.timestamp = QDateTime::fromMSecsSinceEpoch(message.timestamp);
-    log_entry.thread_id = message.body["thread_id"].toString();
-
-    HandleLogMessage(log_entry);
-}
-
-void MainController::HandleErrorReportMessage(const IpcMessage& message)
-{
-    QString error_message = QString("进程错误报告 [%1]: %2")
-                           .arg(message.sender_id)
-                           .arg(message.body["error_message"].toString());
-    
-    qWarning() << "[MainController]" << error_message;
-    
-    // 更新DataStore
-    if (data_store_) {
-        QString error_key = QString("process.%1.last_error").arg(message.sender_id);
-        QJsonObject error_info;
-        error_info["message"] = message.body["error_message"].toString();
-        error_info["error_code"] = message.body["error_code"].toInt();
-        error_info["timestamp"] = QDateTime::currentDateTime().toString(Qt::ISODate);
-        data_store_->setValue(error_key, error_info);
-    }
-    
-    // 触发错误事件回调
-    TriggerEventCallback("process_error_reported", {
-        {"process_id", message.sender_id},
-        {"error_message", message.body["error_message"].toString()},
-        {"error_code", message.body["error_code"].toInt()},
-        {"timestamp", QDateTime::currentDateTime().toString(Qt::ISODate)}
-    });
-}
-
-void MainController::HandleCommandResponseMessage(const IpcMessage& message)
-{
-    qDebug() << "[MainController] 收到命令响应来自:" << message.sender_id 
-             << "消息ID:" << message.msg_id;
-    
-    // 这里可以实现命令响应的缓存和匹配逻辑
-    // 用于SendCommandToProcess方法的异步响应处理
-    
-    // 触发命令响应事件回调
-    TriggerEventCallback("command_response_received", {
-        {"process_id", message.sender_id},
-        {"message_id", message.msg_id},
-        {"response_data", message.body},
-        {"timestamp", QDateTime::currentDateTime().toString(Qt::ISODate)}
-    });
-}
 
 
 // ==================== 窗口嵌入私有实现方法 ====================
