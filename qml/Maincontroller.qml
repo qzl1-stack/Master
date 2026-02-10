@@ -213,7 +213,8 @@ Rectangle {
                                 console.log("[QML] 图标栏点击进程:", modelData.name);
                                 selectedProcess = modelData.name;
                                 secondarySidebarCollapsed = false;
-                                
+                                sideBarCurrentTab = "ip_list";
+
                                 // 调用进程启动逻辑
                                 openProcessTab(modelData);
                                 

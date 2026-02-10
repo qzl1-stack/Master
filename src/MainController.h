@@ -233,7 +233,6 @@ private:
 
     bool InitializeCoreModules();
 
-    bool InitializeLogStorageFromConfig();
     
     bool EmbedProcessWindowImpl(const QString& process_id, qulonglong container_window_id, const QRect& geometry);
     qulonglong FindProcessMainWindow(const QString& process_id, int max_retries = 10, int retry_delay_ms = 400);
@@ -295,7 +294,6 @@ private:
     ProcessManager* process_manager_; 
     ProjectConfig* project_config_;    // 单例，不使用智能指针管理
     DataStore* data_store_;           
-    std::unique_ptr<LogAggregator> log_aggregator_;
     std::unique_ptr<IpcContext> ipc_context_;
     std::unique_ptr<UpdateChecker> update_checker_;
     

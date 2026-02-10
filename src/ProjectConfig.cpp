@@ -9,7 +9,6 @@
 #include <QCoreApplication>
 // 静态成员初始化
 std::unique_ptr<ProjectConfig> ProjectConfig::instance_ = nullptr;
-QMutex ProjectConfig::instance_mutex_;
 
 ProjectConfig::ProjectConfig(QObject *parent)
     : QObject(parent)
@@ -32,7 +31,6 @@ ProjectConfig::~ProjectConfig()
 
 ProjectConfig& ProjectConfig::getInstance()
 {
-    QMutexLocker locker(&instance_mutex_);
     if (!instance_) {
         instance_ = std::unique_ptr<ProjectConfig>(new ProjectConfig());
     }

@@ -2,7 +2,6 @@
 #include "ProcessManager.h"
 #include "ProjectConfig.h"
 #include "DataStore.h"
-#include "ILogStorage.h"
 #include "IIpcCommunication.h"
 #include "update_checker.h"
 #include "PluginManager.h"
@@ -155,14 +154,6 @@ bool MainController::Start()
             qDebug() << "[MainController] IPC服务启动成功";
         }
         
-        // 2. 启动日志聚合服务
-        if (log_aggregator_) {
-            if (!log_aggregator_->startAllStorages()) {
-                qWarning() << "[MainController] 日志聚合服务启动失败";
-                return false;
-            }
-            qDebug() << "[MainController] 日志聚合服务启动成功";
-        }
         
         // 3. 初始化进程管理器
         if (process_manager_) {
@@ -229,12 +220,6 @@ bool MainController::Stop(int timeout_ms)
             qDebug() << "[MainController] IPC服务已停止";
         }
 
-        // 3. 停止日志聚合服务
-        if (log_aggregator_)
-        {
-            log_aggregator_->stopAllStorages();
-            qDebug() << "[MainController] 日志聚合服务已停止";
-        }
 
         // 4. 保存最终状态
         if (data_store_)
@@ -341,7 +326,6 @@ QJsonObject MainController::GetSystemStatistics() const
     modules["process_manager"] = (process_manager_ != nullptr);
     modules["project_config"] = (project_config_ != nullptr);
     modules["data_store"] = (data_store_ != nullptr);
-    modules["log_aggregator"] = (log_aggregator_ != nullptr);
     modules["ipc_context"] = (ipc_context_ != nullptr);
     stats["modules"] = modules;
     
@@ -363,11 +347,6 @@ ProjectConfig* MainController::GetProjectConfig() const
 DataStore* MainController::GetDataStore() const
 {
     return data_store_;
-}
-
-LogAggregator* MainController::GetLogAggregator() const
-{
-    return log_aggregator_.get();
 }
 
 IpcContext* MainController::GetIpcContext() const
@@ -1091,12 +1070,6 @@ void MainController::PerformSystemHealthCheck()
     bool is_healthy = true;
     QString error_message;
     
-    // 检查核心模块状态
-    if (!process_manager_ || !project_config_ || !data_store_ || !log_aggregator_) {
-        is_healthy = false;
-        error_message = "核心模块未初始化";
-    }
-    
     // 检查关键进程状态
     if (is_healthy && process_manager_) {
         QStringList running_processes = process_manager_->GetRunningProcessList();
@@ -1177,17 +1150,6 @@ bool MainController::InitializeCoreModules()
             qWarning() << "[MainController] DataStore初始化失败";
             return false;
         }
-        
-        // 3. 初始化LogAggregator
-        log_aggregator_ = std::make_unique<LogAggregator>();
-
-        // 3.1 从配置中初始化日志存储
-        if (!InitializeLogStorageFromConfig()) {
-            qWarning() << "[MainController] 日志存储初始化失败";
-            return false;
-        }
-
-        // LogAggregator的初始化在Start()中进行 (现在已经注册了存储实例)
 
         // 4. 初始化IpcContext
         if (!InitializeIpcFromConfig()) {
@@ -1372,7 +1334,6 @@ void MainController::CleanupSystemResources()
     
     // 清理模块（智能指针会自动清理）
     ipc_context_.reset();
-    log_aggregator_.reset();
     // data_store_和project_config_是单例，不需要清理
     // process_manager_不需要清理，因为它是单例
     process_manager_ = nullptr;
@@ -1403,11 +1364,6 @@ bool MainController::CheckModuleDependencies() const
         all_ok = false;
     }
     
-    if (!log_aggregator_) {
-        qCritical() << "[MainController] LogAggregator依赖缺失";
-        all_ok = false;
-    }
-    
     if (!ipc_context_) {
         qCritical() << "[MainController] IpcContext依赖缺失";
         all_ok = false;
@@ -1416,47 +1372,6 @@ bool MainController::CheckModuleDependencies() const
     return all_ok;
 }
 
-bool MainController::InitializeLogStorageFromConfig()
-{
-    if (!log_aggregator_ || !project_config_) {
-        qWarning() << "[MainController] LogAggregator或ProjectConfig未初始化";
-        return false;
-    }
-
-    qDebug() << "[MainController] 开始从配置中初始化日志存储";
-
-    // 从配置中注册日志存储实例
-    QJsonObject log_storages_config = project_config_->getConfigValue("log_storages").toObject();
-    if (log_storages_config.isEmpty()) {
-        qDebug() << "[MainController] 配置中没有日志存储设置，使用默认配置";
-        return true; // 没有配置也算成功
-    }
-
-    bool all_success = true;
-    for (auto it = log_storages_config.begin(); it != log_storages_config.end(); ++it) {
-        QString process_id = it.key();
-        QJsonObject storage_entry = it.value().toObject();
-        QString storage_type_str = storage_entry["type"].toString("file"); // 默认为文件存储
-        QJsonObject storage_config = storage_entry["config"].toObject();
-
-        LogStorageType storage_type = LogStorageFactory::getStorageTypeFromString(storage_type_str);
-
-        if (!log_aggregator_->registerStorage(process_id, storage_type, storage_config)) {
-            qWarning() << "[MainController] 注册日志存储失败，进程:" << process_id << ", 类型:" << storage_type_str;
-            all_success = false;
-        } else {
-            qDebug() << "[MainController] 成功注册日志存储，进程:" << process_id << ", 类型:" << storage_type_str;
-        }
-    }
-
-    if (all_success) {
-        qDebug() << "[MainController] 日志存储初始化完成";
-    } else {
-        qWarning() << "[MainController] 部分日志存储初始化失败";
-    }
-
-    return all_success;
-}
 
 bool MainController::InitializeIpcFromConfig()
 {

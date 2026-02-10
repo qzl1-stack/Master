@@ -23,9 +23,6 @@ qt_add_executable(JT_Studio
     src/DataStore.cpp
     src/IIpcCommunication.h
     src/IpcMessage.cpp
-    src/ILogStorage.h
-    src/LogEntry.cpp
-    src/LogAggregator.cpp
     src/ProcessManager.h
     src/ProcessManager.cpp
     src/MainController.h
@@ -33,8 +30,6 @@ qt_add_executable(JT_Studio
     src/LocalSocketIpcCommunication.h
     src/LocalSocketIpcCommunication.cpp
     src/IpcCommunicationFactory.cpp
-    src/FileLogStorage.h
-    src/FileLogStorage.cpp
     src/update_checker.h
     src/update_checker.cpp
     src/FolderDialogHelper.h

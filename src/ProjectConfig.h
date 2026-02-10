@@ -161,7 +161,6 @@ private:
 
 private:
     static std::unique_ptr<ProjectConfig> instance_;    ///< 单例实例
-    static QMutex instance_mutex_;                      ///< 单例创建互斥锁
 
     mutable QMutex config_mutex_;                       ///< 配置访问互斥锁
     QJsonObject config_;                                ///< 配置数据
