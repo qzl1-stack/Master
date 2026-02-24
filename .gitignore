@@ -1,5 +1,6 @@
-
 /build
 /md
 /.cursor
 /.cache
+/.vscode
+/.qmlls.ini
