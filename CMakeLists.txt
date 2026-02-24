@@ -9,7 +9,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 # 启用QML语言服务器支持
 set(QT_QML_GENERATE_QMLLS_INI ON)
 
-find_package(Qt6 REQUIRED COMPONENTS Quick Core Network QuickControls2 Widgets )
+find_package(Qt6 REQUIRED COMPONENTS Quick Core Network QuickControls2 Widgets)
 
 qt_standard_project_setup(REQUIRES 6.5)
 
@@ -36,6 +36,8 @@ qt_add_executable(JT_Studio
     src/FolderDialogHelper.cpp
     src/PluginManager.h
     src/PluginManager.cpp
+    src/app_info.h
+    src/app_info.cpp
 )
 
 qt_add_qml_module(JT_Studio
@@ -47,6 +49,10 @@ qt_add_qml_module(JT_Studio
         qml/WorkspaceSelector.qml
         qml/UpdateNotificationCard.qml
         qml/PluginDetailView.qml
+        qml/AboutDialog.qml
+    RESOURCES
+        qml/images/qrcode.png
+        src/app.ico
 )
 
 set_target_properties(JT_Studio PROPERTIES

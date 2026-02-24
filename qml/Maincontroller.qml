@@ -27,11 +27,11 @@ Rectangle {
     property string currentSystemStatus: "空闲"
     property var processStatusList: []
     property var ipList: []
-    property var pluginList: [] // 插件列表
+    property var pluginList: [] // 工具列表
     property string currentWorkspacePath: ""
     property string selectedProcess: "" // 当前选中的进程
     property bool secondarySidebarCollapsed: false // 次级侧边栏是否收起
-    property int secondarySidebarWidth: 280 // 次级侧边栏展开宽度
+    property int secondarySidebarWidth: 180 // 次级侧边栏展开宽度
     property string sideBarCurrentTab: "ip_list" // 侧边栏当前标签页: "ip_list" 或 "plugins"
 
     onCurrentWorkspacePathChanged: {
@@ -64,14 +64,149 @@ Rectangle {
             Layout.preferredWidth: 56
             Layout.fillHeight: true
             color: "#252526"
-            border.color: "#3e3e42"
-            border.width: 1
+            // border.color: "#3e3e42"
+            // border.width: 1
 
             ColumnLayout {
                 anchors.fill: parent
                 anchors.topMargin: 8
                 spacing: 8
+            
+             Rectangle {
+                    Layout.preferredWidth: 56
+                    Layout.preferredHeight: 56
+                    color: {
+                        if (selectedProcess === "插件商店") {
+                            return "#37373d"
+                        } else if (pluginStoreMouseArea.containsMouse) {
+                            return "#2a2d2e"
+                        } else {
+                            return "transparent"
+                        }
+                    }
 
+                    // 左侧选中指示器
+                    Rectangle {
+                        anchors.left: parent.left
+                        anchors.top: parent.top
+                        anchors.bottom: parent.bottom
+                        width: 2
+                        color: "#007acc"
+                        visible: selectedProcess === "插件商店"
+                    }
+
+                    // Canvas图标容器
+                    Item {
+                        anchors.centerIn: parent
+                        width: 32
+                        height: 32
+
+                        Canvas {
+                            id: pluginStoreIcon
+                            anchors.fill: parent
+                            
+                            property bool isHovered: pluginStoreMouseArea.containsMouse
+                            property bool isSelected: selectedProcess === "插件商店"
+                            
+                            onIsHoveredChanged: requestPaint()
+                            onIsSelectedChanged: requestPaint()
+                            
+                            onPaint: {
+                                var ctx = getContext("2d");
+                                ctx.reset();
+                                ctx.clearRect(0, 0, width, height);
+                                
+                                // 设置基础颜色
+                                var baseColor = isHovered || isSelected ? "#007acc" : "#ffffff";
+                                var accentColor = isHovered || isSelected ? "#4fc1ff" : "#e8e8e8";
+                                
+                                ctx.lineWidth = 1.5;
+                                ctx.lineCap = "round";
+                                ctx.lineJoin = "round";
+                                
+                                // 绘制VSCode风格插件商店图标
+                                drawVSCodePluginIcon(ctx, baseColor, accentColor);
+                            }
+                            
+                            // 绘制VSCode风格的插件商店图标：网格+星号
+                            function drawVSCodePluginIcon(ctx, baseColor, accentColor) {
+                                // 绘制3个彩色方块（代表不同的插件）- 左上、右上、下面
+                                var blockSize = 5;
+                                var spacing = 2;
+                                
+                                // 左上方块 - 蓝色系
+                                ctx.fillStyle = baseColor;
+                                ctx.fillRect(6, 6, blockSize, blockSize);
+                                
+                                // 右上方块 - 绿色系
+                                ctx.fillStyle = accentColor;
+                                ctx.globalAlpha = 0.8;
+                                ctx.fillRect(6 + blockSize + spacing, 6, blockSize, blockSize);
+                                ctx.globalAlpha = 1;
+                                
+                                // 左下方块 - 紫色系
+                                ctx.fillStyle = accentColor;
+                                ctx.globalAlpha = 0.6;
+                                ctx.fillRect(6, 6 + blockSize + spacing, blockSize, blockSize);
+                                ctx.globalAlpha = 1;
+                                
+                                // 右下方块（主要块）- 更大更突出
+                                ctx.fillStyle = baseColor;
+                                ctx.globalAlpha = 0.9;
+                                ctx.fillRect(6 + blockSize + spacing, 6 + blockSize + spacing, blockSize + 1, blockSize + 1);
+                                ctx.globalAlpha = 1;
+                                
+                                // 添加星号标记在右下方块的右上角（表示推荐）
+                                ctx.strokeStyle = baseColor;
+                                ctx.fillStyle = baseColor;
+                                var starX = 6 + blockSize + spacing + blockSize + 1 + 2;
+                                var starY = 6 - 2;
+                                drawStar(ctx, starX, starY, 2);
+                            }
+                            
+                            // 绘制小星号
+                            function drawStar(ctx, cx, cy, r) {
+                                var points = 5;
+                                var outerRadius = r;
+                                var innerRadius = r * 0.4;
+                                
+                                ctx.beginPath();
+                                for (var i = 0; i < points * 2; i++) {
+                                    var radius = i % 2 === 0 ? outerRadius : innerRadius;
+                                    var angle = (i * Math.PI) / points - Math.PI / 2;
+                                    var x = cx + Math.cos(angle) * radius;
+                                    var y = cy + Math.sin(angle) * radius;
+                                    if (i === 0) ctx.moveTo(x, y);
+                                    else ctx.lineTo(x, y);
+                                }
+                                ctx.closePath();
+                                ctx.fill();
+                            }
+                        }
+                    }
+
+                    MouseArea {
+                        id: pluginStoreMouseArea
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        
+                        onClicked: {
+                            console.log("[QML] 点击插件商店");
+                            selectedProcess = "插件商店";
+                            secondarySidebarCollapsed = false;
+                            sideBarCurrentTab = "plugins";
+                            // 加载工具列表
+                            loadPluginsFromUrl();
+                        }
+                        
+                    }
+
+                    Behavior on color {
+                        ColorAnimation {
+                            duration: 200
+                        }
+                    }
+                }
                 // 进程图标列表
                 Repeater {
                     model: processStatusList
@@ -233,151 +368,6 @@ Rectangle {
                             ColorAnimation {
                                 duration: 200
                             }
-                        }
-                    }
-                }
-
-                // 分隔线
-                Rectangle {
-                    Layout.fillWidth: true
-                    Layout.preferredHeight: 1
-                    color: "#3e3e42"
-                    Layout.topMargin: 4
-                    Layout.bottomMargin: 4
-                }
-
-                Rectangle {
-                    Layout.preferredWidth: 56
-                    Layout.preferredHeight: 56
-                    color: {
-                        if (selectedProcess === "插件商店") {
-                            return "#37373d"
-                        } else if (pluginStoreMouseArea.containsMouse) {
-                            return "#2a2d2e"
-                        } else {
-                            return "transparent"
-                        }
-                    }
-
-                    // 左侧选中指示器
-                    Rectangle {
-                        anchors.left: parent.left
-                        anchors.top: parent.top
-                        anchors.bottom: parent.bottom
-                        width: 2
-                        color: "#007acc"
-                        visible: selectedProcess === "插件商店"
-                    }
-
-                    // Canvas图标容器
-                    Item {
-                        anchors.centerIn: parent
-                        width: 32
-                        height: 32
-
-                        Canvas {
-                            id: pluginStoreIcon
-                            anchors.fill: parent
-                            
-                            property bool isHovered: pluginStoreMouseArea.containsMouse
-                            property bool isSelected: selectedProcess === "插件商店"
-                            
-                            onIsHoveredChanged: requestPaint()
-                            onIsSelectedChanged: requestPaint()
-                            
-                            onPaint: {
-                                var ctx = getContext("2d");
-                                ctx.reset();
-                                ctx.clearRect(0, 0, width, height);
-                                
-                                // 设置基础颜色
-                                var baseColor = isHovered || isSelected ? "#007acc" : "#ffffff";
-                                var accentColor = isHovered || isSelected ? "#4fc1ff" : "#e8e8e8";
-                                
-                                ctx.lineWidth = 1.5;
-                                ctx.lineCap = "round";
-                                ctx.lineJoin = "round";
-                                
-                                // 绘制VSCode风格插件商店图标
-                                drawVSCodePluginIcon(ctx, baseColor, accentColor);
-                            }
-                            
-                            // 绘制VSCode风格的插件商店图标：网格+星号
-                            function drawVSCodePluginIcon(ctx, baseColor, accentColor) {
-                                // 绘制3个彩色方块（代表不同的插件）- 左上、右上、下面
-                                var blockSize = 5;
-                                var spacing = 2;
-                                
-                                // 左上方块 - 蓝色系
-                                ctx.fillStyle = baseColor;
-                                ctx.fillRect(6, 6, blockSize, blockSize);
-                                
-                                // 右上方块 - 绿色系
-                                ctx.fillStyle = accentColor;
-                                ctx.globalAlpha = 0.8;
-                                ctx.fillRect(6 + blockSize + spacing, 6, blockSize, blockSize);
-                                ctx.globalAlpha = 1;
-                                
-                                // 左下方块 - 紫色系
-                                ctx.fillStyle = accentColor;
-                                ctx.globalAlpha = 0.6;
-                                ctx.fillRect(6, 6 + blockSize + spacing, blockSize, blockSize);
-                                ctx.globalAlpha = 1;
-                                
-                                // 右下方块（主要块）- 更大更突出
-                                ctx.fillStyle = baseColor;
-                                ctx.globalAlpha = 0.9;
-                                ctx.fillRect(6 + blockSize + spacing, 6 + blockSize + spacing, blockSize + 1, blockSize + 1);
-                                ctx.globalAlpha = 1;
-                                
-                                // 添加星号标记在右下方块的右上角（表示推荐）
-                                ctx.strokeStyle = baseColor;
-                                ctx.fillStyle = baseColor;
-                                var starX = 6 + blockSize + spacing + blockSize + 1 + 2;
-                                var starY = 6 - 2;
-                                drawStar(ctx, starX, starY, 2);
-                            }
-                            
-                            // 绘制小星号
-                            function drawStar(ctx, cx, cy, r) {
-                                var points = 5;
-                                var outerRadius = r;
-                                var innerRadius = r * 0.4;
-                                
-                                ctx.beginPath();
-                                for (var i = 0; i < points * 2; i++) {
-                                    var radius = i % 2 === 0 ? outerRadius : innerRadius;
-                                    var angle = (i * Math.PI) / points - Math.PI / 2;
-                                    var x = cx + Math.cos(angle) * radius;
-                                    var y = cy + Math.sin(angle) * radius;
-                                    if (i === 0) ctx.moveTo(x, y);
-                                    else ctx.lineTo(x, y);
-                                }
-                                ctx.closePath();
-                                ctx.fill();
-                            }
-                        }
-                    }
-
-                    MouseArea {
-                        id: pluginStoreMouseArea
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        
-                        onClicked: {
-                            console.log("[QML] 点击插件商店");
-                            selectedProcess = "插件商店";
-                            secondarySidebarCollapsed = false;
-                            sideBarCurrentTab = "plugins";
-                            // 加载插件列表
-                            loadPluginsFromUrl();
-                        }
-                        
-                    }
-
-                    Behavior on color {
-                        ColorAnimation {
-                            duration: 200
                         }
                     }
                 }
@@ -556,7 +546,7 @@ Rectangle {
                     }
                 }
 
-                // 插件列表视图
+                // 工具列表视图
                 Rectangle {
                     color: "#2c2c2c"
                     Layout.fillWidth: true
@@ -573,7 +563,7 @@ Rectangle {
                             Layout.preferredHeight: 35
 
                             Text {
-                                text: "插件列表"
+                                text: "工具列表"
                                 color: "#cccccc"
                                 font.pixelSize: 12
                                 font.bold: true
@@ -732,8 +722,8 @@ Rectangle {
                             Layout.fillWidth: true
                             Layout.preferredHeight: 35
                             color: "#252526"
-                            border.color: "#3e3e42"
-                            border.width: 1
+                            // border.color: "#3e3e42"
+                            // border.width: 1
 
                             ScrollView {
                                 anchors.fill: parent
@@ -1217,7 +1207,7 @@ Rectangle {
         }
     }
 
-    // 插件列表Delegate
+    // 工具列表Delegate
     Component {
         id: sidebarPluginDelegate
 
@@ -2887,7 +2877,7 @@ Rectangle {
     }
 
     /**
-    * @brief 从URL加载插件列表
+    * @brief 从URL加载工具列表
     */
     function loadPluginsFromUrl() {
         var xhr = new XMLHttpRequest();
@@ -2898,7 +2888,7 @@ Rectangle {
                 if (xhr.status === 200) {
                     try {
                         var data = JSON.parse(xhr.responseText);
-                        console.log("[QML] 插件列表加载成功，共 " + data.plugins.length + " 个插件");
+                        console.log("[QML] 工具列表加载成功，共 " + data.plugins.length + " 个插件");
                         
                         // 将数据转换为QML可用的格式
                         var pluginArray = [];
@@ -2921,36 +2911,36 @@ Rectangle {
                             });
                         }
                         pluginList = pluginArray;
-                        appendLog("插件列表加载成功，共 " + pluginArray.length + " 个插件");
+                        appendLog("工具列表加载成功，共 " + pluginArray.length + " 个插件");
                     } catch (e) {
                         console.log("[QML] 插件JSON解析错误: " + e.message);
-                        appendLog("插件列表解析失败: " + e.message);
+                        appendLog("工具列表解析失败: " + e.message);
                     }
                 } else {
-                    console.log("[QML] 加载插件列表失败，状态码: " + xhr.status);
-                    appendLog("加载插件列表失败，状态码: " + xhr.status);
+                    console.log("[QML] 加载工具列表失败，状态码: " + xhr.status);
+                    appendLog("加载工具列表失败，状态码: " + xhr.status);
                 }
             }
         };
         
         xhr.onerror = function() {
-            console.log("[QML] 加载插件列表网络错误");
-            appendLog("加载插件列表网络错误");
+            console.log("[QML] 加载工具列表网络错误");
+            appendLog("加载工具列表网络错误");
         };
         
         xhr.ontimeout = function() {
-            console.log("[QML] 加载插件列表超时");
-            appendLog("加载插件列表超时");
+            console.log("[QML] 加载工具列表超时");
+            appendLog("加载工具列表超时");
         };
         
         try {
-            console.log("[QML] 开始加载插件列表...");
-            appendLog("正在加载插件列表...");
+            console.log("[QML] 开始加载工具列表...");
+            appendLog("正在加载工具列表...");
             xhr.open("GET", "https://jts-tools-extensions.oss-cn-chengdu.aliyuncs.com/plugins.json", true);
             xhr.send();
         } catch (e) {
-            console.log("[QML] 加载插件列表异常: " + e.message);
-            appendLog("加载插件列表异常: " + e.message);
+            console.log("[QML] 加载工具列表异常: " + e.message);
+            appendLog("加载工具列表异常: " + e.message);
         }
     }
 

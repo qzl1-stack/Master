@@ -1,3 +1,4 @@
+#include "app_info.h"
 #include "DataStore.h"
 #include "FolderDialogHelper.h"
 #include "MainController.h"
@@ -107,6 +108,11 @@ int main(int argc, char *argv[]) {
   engine.rootContext()->setContextProperty("folderDialogHelper",
                                            folderDialogHelper);
   qDebug() << "FolderDialogHelper已注册并暴露给QML";
+
+  // 创建应用程序信息实例并暴露给QML
+  AppInfo *appInfo = new AppInfo(&app);
+  engine.rootContext()->setContextProperty("appInfo", appInfo);
+  qDebug() << "AppInfo已注册并暴露给QML";
 
   engine.rootContext()->setContextProperty("updateCheckerInstance",
                                            mainController.GetUpdateChecker());

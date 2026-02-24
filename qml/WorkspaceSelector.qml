@@ -386,6 +386,29 @@ Rectangle {
         }
     }
 
+    // 左下角二维码
+    Rectangle {
+        anchors.bottom: parent.bottom
+        anchors.left: parent.left
+        anchors.margins: 15
+        width: 90
+        height: 90
+        color: "#ffffff"
+        radius: 4
+        border.color: "#3e3e42"
+        border.width: 1
+
+        Image {
+            id: qrcodeImage
+            anchors.fill: parent
+            anchors.margins: 4
+            source: "images/qrcode.png"
+            fillMode: Image.PreserveAspectFit
+            sourceSize: Qt.size(width, height)
+
+        }
+    }
+
     // 文件夹选择对话框助手 (使用 C++ 实现的 FolderDialogHelper)
     FolderDialogHelper {
         id: folderDialogHelper
