@@ -2014,7 +2014,8 @@ void MainController::CheckForUpdates()
              << (updaterFileInfo.permissions() & QFile::ExeOwner ? "可执行" : "");
 
     qDebug() << "即将以完全独立模式启动 updater.exe...";
-    
+
+#ifdef Q_OS_WIN
     // 使用 WinAPI 创建一个完全独立的进程，脱离父进程的控制台
     STARTUPINFOW si;
     PROCESS_INFORMATION pi;
@@ -2086,6 +2087,9 @@ void MainController::CheckForUpdates()
         
 
     }
+#else
+    qWarning() << "[MainController] CheckForUpdates: 当前平台不支持此功能";
+#endif
 
     qDebug() << "=== CheckForUpdates 执行完毕 ===";
 }
