@@ -1,8 +1,9 @@
-#include "app_info.h"
 #include "DataStore.h"
 #include "FolderDialogHelper.h"
 #include "MainController.h"
+#include "PluginManager.h"
 #include "ProjectConfig.h"
+#include "app_info.h"
 #include "update_checker.h"
 #include <QApplication>
 #include <QDateTime>
@@ -73,7 +74,6 @@ void customMessageOutput(QtMsgType type, const QMessageLogContext &context,
     logFile.close();
   }
 
-  // 同时输出到标准错误流
   fprintf(stderr, "%s\n", msg.toLocal8Bit().constData());
   fflush(stderr);
 }
@@ -82,12 +82,9 @@ int main(int argc, char *argv[]) {
   qInstallMessageHandler(customMessageOutput);
   QApplication app(argc, argv);
 
-  // 设置全局样式为Material
   QQuickStyle::setStyle("Material");
 
   qDebug() << "正在启动Master主控系统...";
-
-  // 获取MainController单例实例
   MainController &mainController = MainController::GetInstance();
   qDebug() << "MainController实例已获取";
 
@@ -96,20 +93,15 @@ int main(int argc, char *argv[]) {
 
   // 添加QML导入路径，确保能找到所有QML模块
   engine.addImportPath(QCoreApplication::applicationDirPath() + "/qml");
-
-  // 注册UpdateChecker类型到QML系统
   qmlRegisterType<UpdateChecker>("Master", 1, 0, "UpdateChecker");
 
-  // 注册FolderDialogHelper类型到QML系统
   qmlRegisterType<FolderDialogHelper>("Master", 1, 0, "FolderDialogHelper");
 
-  // 创建文件夹选择对话框助手实例并暴露给QML
   FolderDialogHelper *folderDialogHelper = new FolderDialogHelper(&app);
   engine.rootContext()->setContextProperty("folderDialogHelper",
                                            folderDialogHelper);
   qDebug() << "FolderDialogHelper已注册并暴露给QML";
 
-  // 创建应用程序信息实例并暴露给QML
   AppInfo *appInfo = new AppInfo(&app);
   engine.rootContext()->setContextProperty("appInfo", appInfo);
   qDebug() << "AppInfo已注册并暴露给QML";
@@ -117,10 +109,16 @@ int main(int argc, char *argv[]) {
   engine.rootContext()->setContextProperty("updateCheckerInstance",
                                            mainController.GetUpdateChecker());
   qDebug() << "UpdateChecker类型已注册到QML系统";
-  // 将MainController实例暴露给QML
+
   engine.rootContext()->setContextProperty("mainControllerInstance",
                                            &mainController);
   qDebug() << "MainController已暴露给QML上下文";
+
+  PluginManager &pluginManager = PluginManager::GetInstance();
+  pluginManager.Initialize();
+  engine.rootContext()->setContextProperty("pluginManagerInstance",
+                                           &pluginManager);
+  qDebug() << "PluginManager已暴露给QML上下文";
 
   // 连接对象创建失败信号
   QObject::connect(

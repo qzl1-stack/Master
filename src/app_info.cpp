@@ -33,7 +33,7 @@ QString AppInfo::GetOsInfo() const
 
 QString AppInfo::GetBuildInfo() const
 {
-    QString buildInfo = QString("Build with Qt %1 ")
+    QString buildInfo = QString("%1 ")
         .arg(qVersion());
     
     return buildInfo;
