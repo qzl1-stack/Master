@@ -3,4 +3,5 @@
 /.cursor
 /.cache
 /.vscode
+.vscode/settings.json
 /.qmlls.ini
