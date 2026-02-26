@@ -50,6 +50,21 @@ Rectangle {
         onTriggered: updateSystemStatus()
     }
 
+    // 监听 PluginManager 的信号
+    Connections {
+        target: pluginManagerInstance
+
+        // 插件列表更新时，从 C++ 端重新拉取列表数据刷新 QML 属性
+        function onPluginListUpdated() {
+            pluginList = pluginManagerInstance.getAvailablePlugins();
+        }
+
+        // 日志消息信号：将 C++ 发出的日志写入 QML 日志面板
+        function onLogMessage(message) {
+            appendLog(message);
+        }
+    }
+
     // ==================== 新的VSCode风格主布局 ====================
     RowLayout {
         anchors.top: parent.top
@@ -71,19 +86,11 @@ Rectangle {
                 anchors.fill: parent
                 anchors.topMargin: 8
                 spacing: 8
-            
-             Rectangle {
+
+                Rectangle {
                     Layout.preferredWidth: 56
                     Layout.preferredHeight: 56
-                    color: {
-                        if (selectedProcess === "插件商店") {
-                            return "#37373d"
-                        } else if (pluginStoreMouseArea.containsMouse) {
-                            return "#2a2d2e"
-                        } else {
-                            return "transparent"
-                        }
-                    }
+                    color: "transparent"
 
                     // 左侧选中指示器
                     Rectangle {
@@ -104,58 +111,58 @@ Rectangle {
                         Canvas {
                             id: pluginStoreIcon
                             anchors.fill: parent
-                            
+
                             property bool isHovered: pluginStoreMouseArea.containsMouse
                             property bool isSelected: selectedProcess === "插件商店"
-                            
+
                             onIsHoveredChanged: requestPaint()
                             onIsSelectedChanged: requestPaint()
-                            
+
                             onPaint: {
                                 var ctx = getContext("2d");
                                 ctx.reset();
                                 ctx.clearRect(0, 0, width, height);
-                                
+
                                 // 设置基础颜色
                                 var baseColor = isHovered || isSelected ? "#007acc" : "#ffffff";
                                 var accentColor = isHovered || isSelected ? "#4fc1ff" : "#e8e8e8";
-                                
+
                                 ctx.lineWidth = 1.5;
                                 ctx.lineCap = "round";
                                 ctx.lineJoin = "round";
-                                
+
                                 // 绘制VSCode风格插件商店图标
                                 drawVSCodePluginIcon(ctx, baseColor, accentColor);
                             }
-                            
+
                             // 绘制VSCode风格的插件商店图标：网格+星号
                             function drawVSCodePluginIcon(ctx, baseColor, accentColor) {
                                 // 绘制3个彩色方块（代表不同的插件）- 左上、右上、下面
                                 var blockSize = 5;
                                 var spacing = 2;
-                                
+
                                 // 左上方块 - 蓝色系
                                 ctx.fillStyle = baseColor;
                                 ctx.fillRect(6, 6, blockSize, blockSize);
-                                
+
                                 // 右上方块 - 绿色系
                                 ctx.fillStyle = accentColor;
                                 ctx.globalAlpha = 0.8;
                                 ctx.fillRect(6 + blockSize + spacing, 6, blockSize, blockSize);
                                 ctx.globalAlpha = 1;
-                                
+
                                 // 左下方块 - 紫色系
                                 ctx.fillStyle = accentColor;
                                 ctx.globalAlpha = 0.6;
                                 ctx.fillRect(6, 6 + blockSize + spacing, blockSize, blockSize);
                                 ctx.globalAlpha = 1;
-                                
+
                                 // 右下方块（主要块）- 更大更突出
                                 ctx.fillStyle = baseColor;
                                 ctx.globalAlpha = 0.9;
                                 ctx.fillRect(6 + blockSize + spacing, 6 + blockSize + spacing, blockSize + 1, blockSize + 1);
                                 ctx.globalAlpha = 1;
-                                
+
                                 // 添加星号标记在右下方块的右上角（表示推荐）
                                 ctx.strokeStyle = baseColor;
                                 ctx.fillStyle = baseColor;
@@ -163,21 +170,23 @@ Rectangle {
                                 var starY = 6 - 2;
                                 drawStar(ctx, starX, starY, 2);
                             }
-                            
+
                             // 绘制小星号
                             function drawStar(ctx, cx, cy, r) {
                                 var points = 5;
                                 var outerRadius = r;
                                 var innerRadius = r * 0.4;
-                                
+
                                 ctx.beginPath();
                                 for (var i = 0; i < points * 2; i++) {
                                     var radius = i % 2 === 0 ? outerRadius : innerRadius;
                                     var angle = (i * Math.PI) / points - Math.PI / 2;
                                     var x = cx + Math.cos(angle) * radius;
                                     var y = cy + Math.sin(angle) * radius;
-                                    if (i === 0) ctx.moveTo(x, y);
-                                    else ctx.lineTo(x, y);
+                                    if (i === 0)
+                                        ctx.moveTo(x, y);
+                                    else
+                                        ctx.lineTo(x, y);
                                 }
                                 ctx.closePath();
                                 ctx.fill();
@@ -189,7 +198,7 @@ Rectangle {
                         id: pluginStoreMouseArea
                         anchors.fill: parent
                         hoverEnabled: true
-                        
+
                         onClicked: {
                             console.log("[QML] 点击插件商店");
                             selectedProcess = "插件商店";
@@ -198,7 +207,6 @@ Rectangle {
                             // 加载工具列表
                             loadPluginsFromUrl();
                         }
-                        
                     }
 
                     Behavior on color {
@@ -210,19 +218,11 @@ Rectangle {
                 // 进程图标列表
                 Repeater {
                     model: processStatusList
-                    
+
                     Rectangle {
                         Layout.preferredWidth: 56
                         Layout.preferredHeight: 56
-                        color: {
-                            if (selectedProcess === modelData.name) {
-                                return "#37373d"
-                            } else if (iconMouseArea.containsMouse) {
-                                return "#2a2d2e"
-                            } else {
-                                return "transparent"
-                            }
-                        }
+                        color: "transparent"
 
                         // 左侧选中指示器
                         Rectangle {
@@ -257,18 +257,18 @@ Rectangle {
                             Canvas {
                                 id: processIcon
                                 anchors.fill: parent
-                                
+
                                 property bool isHovered: iconMouseArea.containsMouse
                                 property bool isSelected: selectedProcess === modelData.name
-                                
+
                                 onIsHoveredChanged: requestPaint()
                                 onIsSelectedChanged: requestPaint()
-                                
+
                                 onPaint: {
                                     var ctx = getContext("2d");
                                     ctx.reset();
                                     ctx.clearRect(0, 0, width, height);
-                                    
+
                                     // 设置颜色
                                     var iconColor = isHovered || isSelected ? "#007acc" : "#ffffff";
                                     ctx.strokeStyle = iconColor;
@@ -276,7 +276,7 @@ Rectangle {
                                     ctx.lineWidth = 2;
                                     ctx.lineCap = "round";
                                     ctx.lineJoin = "round";
-                                    
+
                                     // 根据进程名称绘制不同的图标
                                     if (modelData.name === "文件传输" || modelData.name.includes("文件") || modelData.name.includes("传输")) {
                                         drawFileTransferIcon(ctx);
@@ -287,7 +287,7 @@ Rectangle {
                                         drawDefaultIcon(ctx);
                                     }
                                 }
-                                
+
                                 // 文件传输图标：文件夹+箭头
                                 function drawFileTransferIcon(ctx) {
                                     // 绘制文件夹
@@ -303,7 +303,7 @@ Rectangle {
                                     ctx.lineTo(14, 8);
                                     ctx.lineTo(16, 12);
                                     ctx.stroke();
-                                    
+
                                     // 绘制上传箭头
                                     ctx.beginPath();
                                     // 箭头线
@@ -315,7 +315,7 @@ Rectangle {
                                     ctx.lineTo(19, 17);
                                     ctx.stroke();
                                 }
-                                
+
                                 // AGV分析图标：柱状图
                                 function drawAGVAnalysisIcon(ctx) {
                                     // 绘制坐标轴
@@ -325,13 +325,13 @@ Rectangle {
                                     ctx.moveTo(6, 26);
                                     ctx.lineTo(26, 26);
                                     ctx.stroke();
-                                    
+
                                     // 绘制柱状图
                                     ctx.fillRect(10, 18, 4, 8);
                                     ctx.fillRect(16, 14, 4, 12);
                                     ctx.fillRect(22, 10, 4, 16);
                                 }
-                                
+
                                 // 默认图标：方块
                                 function drawDefaultIcon(ctx) {
                                     ctx.strokeRect(8, 8, 16, 16);
@@ -343,7 +343,7 @@ Rectangle {
                             id: iconMouseArea
                             anchors.fill: parent
                             hoverEnabled: true
-                            
+
                             onClicked: {
                                 console.log("[QML] 图标栏点击进程:", modelData.name);
                                 selectedProcess = modelData.name;
@@ -352,7 +352,7 @@ Rectangle {
 
                                 // 调用进程启动逻辑
                                 openProcessTab(modelData);
-                                
+
                                 // 检查进程状态，只有在未运行时才启动
                                 if (modelData.status !== "运行中" && modelData.status !== "启动中") {
                                     console.log("[QML] 图标栏点击，立即启动进程:", modelData.name);
@@ -361,7 +361,6 @@ Rectangle {
                                     console.log("[QML] 图标栏点击，进程已在运行或启动中，跳过启动:", modelData.name);
                                 }
                             }
-                            
                         }
 
                         Behavior on color {
@@ -391,7 +390,7 @@ Rectangle {
 
             // 添加收缩动画（仅在 secondarySidebarCollapsed 改变时动画，不在拖动时动画）
             property bool isDragging: false
-            
+
             Behavior on Layout.preferredWidth {
                 enabled: !sideBar.isDragging
                 NumberAnimation {
@@ -522,7 +521,7 @@ Rectangle {
                                         }
                                     }
                                 }
-                                }
+                            }
                         }
 
                         ScrollView {
@@ -593,7 +592,7 @@ Rectangle {
                                         // 绘制刷新图标
                                         var cx = 16, cy = 16;
                                         var r = 5;
-                                        
+
                                         // 绘制圆形
                                         ctx.beginPath();
                                         ctx.arc(cx, cy, r, 0.5, Math.PI * 2 - 0.5);
@@ -669,7 +668,7 @@ Rectangle {
 
                 onReleased: {
                     sideBar.isDragging = false;
-                    
+
                     // 松手时检查是否需要收起或记忆宽度
                     var currentWidth = sideBar.Layout.preferredWidth;
                     if (currentWidth < 150) {
@@ -2586,7 +2585,7 @@ Rectangle {
     function updateIpAddress(index, newIp) {
         if (index >= 0 && index < ipList.length && newIp) {
             var oldIp = ipList[index];
-            if(oldIp === newIp)
+            if (oldIp === newIp)
                 return;
             ipList[index] = newIp;
             ipList = ipList.slice(); // 触发属性更新
@@ -2860,88 +2859,13 @@ Rectangle {
         });
     }
 
-    /**
-    * @brief 通知子进程选定的IP
-    */
-    /**
-    * @brief 格式化文件大小为易读的形式
-    * @param bytes 字节数
-    * @return 格式化的文件大小字符串
-    */
+    // ==================== 插件管理辅助函数 ====================
     function formatFileSize(bytes) {
-        if (bytes === 0) return "0 B";
-        var k = 1024;
-        var sizes = ["B", "KB", "MB", "GB"];
-        var i = Math.floor(Math.log(bytes) / Math.log(k));
-        return (bytes / Math.pow(k, i)).toFixed(2) + " " + sizes[i];
+        return pluginManagerInstance.FormatFileSize(bytes);
     }
-
-    /**
-    * @brief 从URL加载工具列表
-    */
+    
     function loadPluginsFromUrl() {
-        var xhr = new XMLHttpRequest();
-        xhr.timeout = 5000; // 5秒超时
-        
-        xhr.onreadystatechange = function() {
-            if (xhr.readyState === XMLHttpRequest.DONE) {
-                if (xhr.status === 200) {
-                    try {
-                        var data = JSON.parse(xhr.responseText);
-                        console.log("[QML] 工具列表加载成功，共 " + data.plugins.length + " 个插件");
-                        
-                        // 将数据转换为QML可用的格式
-                        var pluginArray = [];
-                        for (var i = 0; i < data.plugins.length; i++) {
-                            pluginArray.push({
-                                id: data.plugins[i].id,
-                                name: data.plugins[i].name,
-                                version: data.plugins[i].version,
-                                author: data.plugins[i].author,
-                                description: data.plugins[i].description,
-                                detailed_description: data.plugins[i].detailed_description,
-                                category: data.plugins[i].category,
-                                download_url: data.plugins[i].download_url,
-                                download_size: data.plugins[i].download_size,
-                                executable: data.plugins[i].executable,
-                                required_version: data.plugins[i].required_version,
-                                icon_type: data.plugins[i].icon_type || "default",
-                                dependencies: data.plugins[i].dependencies || [],
-                                screenshots: data.plugins[i].screenshots || []
-                            });
-                        }
-                        pluginList = pluginArray;
-                        appendLog("工具列表加载成功，共 " + pluginArray.length + " 个插件");
-                    } catch (e) {
-                        console.log("[QML] 插件JSON解析错误: " + e.message);
-                        appendLog("工具列表解析失败: " + e.message);
-                    }
-                } else {
-                    console.log("[QML] 加载工具列表失败，状态码: " + xhr.status);
-                    appendLog("加载工具列表失败，状态码: " + xhr.status);
-                }
-            }
-        };
-        
-        xhr.onerror = function() {
-            console.log("[QML] 加载工具列表网络错误");
-            appendLog("加载工具列表网络错误");
-        };
-        
-        xhr.ontimeout = function() {
-            console.log("[QML] 加载工具列表超时");
-            appendLog("加载工具列表超时");
-        };
-        
-        try {
-            console.log("[QML] 开始加载工具列表...");
-            appendLog("正在加载工具列表...");
-            xhr.open("GET", "https://jts-tools-extensions.oss-cn-chengdu.aliyuncs.com/plugins.json", true);
-            xhr.send();
-        } catch (e) {
-            console.log("[QML] 加载工具列表异常: " + e.message);
-            appendLog("加载工具列表异常: " + e.message);
-        }
+        pluginManagerInstance.fetchPluginList();
     }
 
     function notifyIpSelection(selectedIp) {
