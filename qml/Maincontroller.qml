@@ -1222,6 +1222,7 @@ Rectangle {
                 hoverEnabled: true
                 onClicked: {
                     sidebarPluginListView.currentIndex = index;
+                    openPluginDetailTab(modelData);
                 }
             }
 
@@ -1400,14 +1401,22 @@ Rectangle {
                 sourceComponent: {
                     if (modelData.type === "process")
                         return processDetailComponent;
+                    if (modelData.type === "plugin_detail")
+                        return pluginDetailComponent;
                 }
 
                 property var tabData: modelData || {}
                 onLoaded: {
                     if (loader.item) {
-                        loader.item.loaderRef = loader.item; // 传自身引用，也可传 loader 但推荐传 loader.item
-                        // 传递 startEmbeddingTask 函数引用，以便在 processDetailComponent 中使用
-                        loader.item.startEmbeddingTaskRef = startEmbeddingTask;
+                        if (modelData.type === "process") {
+                            loader.item.loaderRef = loader.item;
+                            loader.item.startEmbeddingTaskRef = startEmbeddingTask;
+                        } else if (modelData.type === "plugin_detail") {
+                            loader.item.pluginId = tabData.data.id || "";
+                            loader.item.pluginData = tabData.data || null;
+                            loader.item.mainController = mainControllerRoot.mainController;
+                            loader.item.loaderRef = loader.item;
+                        }
                     }
                 }
             }
@@ -1549,6 +1558,14 @@ Rectangle {
                     }
                 }
             }
+        }
+    }
+
+    // 插件详情组件
+    Component {
+        id: pluginDetailComponent
+        PluginDetailView {
+            property var loaderRef: null
         }
     }
 
@@ -2462,6 +2479,41 @@ Rectangle {
         console.log("[QML] openProcessTab 设置待嵌入进程:", pendingEmbedProcess);
 
         appendLog("打开进程详情: " + (processData.name || "未知进程"));
+    }
+
+    /**
+    * @brief 打开插件详情标签页
+    */
+    function openPluginDetailTab(pluginData) {
+        if (!pluginData)
+            return;
+
+        if (stackLayout.depth > 1) {
+            stackLayout.pop(null);
+        }
+
+        var existingIndex = -1;
+        for (var i = 0; i < openTabs.length; i++) {
+            if (openTabs[i].type === "plugin_detail" && openTabs[i].data && openTabs[i].data.id === pluginData.id) {
+                existingIndex = i;
+                break;
+            }
+        }
+
+        if (existingIndex >= 0) {
+            currentTabIndex = existingIndex;
+        } else {
+            var newTab = {
+                type: "plugin_detail",
+                title: pluginData.name || "未知插件",
+                data: pluginData
+            };
+            openTabs.push(newTab);
+            openTabs = openTabs.slice();
+            currentTabIndex = openTabs.length - 1;
+        }
+
+        appendLog("打开插件详情: " + (pluginData.name || "未知插件"));
     }
 
     /**
