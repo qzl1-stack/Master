@@ -1381,7 +1381,6 @@ Rectangle {
                     }
                     onClicked: {
                         closeTab(index);
-                        mouse.accepted = true;
                     }
                 }
             }
@@ -2438,9 +2437,6 @@ Rectangle {
 
     // ==================== VSCode风格界面控制函数 ====================
 
-    /**
-    * @brief 打开进程详情标签页
-    */
     function openProcessTab(processData) {
         if (!processData)
             return;
@@ -2481,9 +2477,6 @@ Rectangle {
         appendLog("打开进程详情: " + (processData.name || "未知进程"));
     }
 
-    /**
-    * @brief 打开插件详情标签页
-    */
     function openPluginDetailTab(pluginData) {
         if (!pluginData)
             return;
@@ -2516,9 +2509,7 @@ Rectangle {
         appendLog("打开插件详情: " + (pluginData.name || "未知插件"));
     }
 
-    /**
-    * @brief 关闭指定标签页
-    */
+
     function closeTab(tabIndex) {
         if (tabIndex < 0 || tabIndex >= openTabs.length)
             return;
@@ -2658,11 +2649,6 @@ Rectangle {
         }
     }
 
-    /**
-     * @brief 验证IP地址格式
-     * @param ip IP地址字符串
-     * @return 是否为有效IP地址
-     */
     function isValidIp(ip) {
         if (!ip || typeof ip !== "string")
             return false;

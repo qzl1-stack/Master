@@ -126,7 +126,6 @@ public:
     
     Q_INVOKABLE bool StopSubProcess(const QString& process_id, int timeout_ms = 5000);
     
-    Q_INVOKABLE bool RestartSubProcess(const QString& process_id);
     
     Q_INVOKABLE QJsonObject GetAllProcessInfo() const;
     

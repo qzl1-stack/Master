@@ -15,16 +15,12 @@
 /**
  * @brief ProcessManager 进程生命周期管理类
  * 
- * 负责子进程的生命周期管理，包括启动、停止、重启、状态监控。
- * 通过QProcess实现，支持异常检测与自动重启。
+ * 负责子进程的生命周期管理，包括启动、停止、状态监控。
  * 采用单例模式确保进程管理全局唯一。
  * 
  * 主要功能：
- * - 子进程启动、停止、重启管理
+ * - 子进程启动、停止管理
  * - 进程状态监控和心跳检测
- * - 异常检测与自动重启机制
- * - 进程资源监控
- * - 优雅的进程退出机制
  */
 class ProcessManager : public QObject
 {
@@ -54,9 +50,6 @@ public:
         ProcessStatus status;           ///< 进程状态
         QDateTime start_time;           ///< 启动时间
         QDateTime last_heartbeat;       ///< 最后心跳时间
-        int restart_count;              ///< 重启次数
-        bool auto_restart;              ///< 是否自动重启
-        int max_restart_count;          ///< 最大重启次数
         QProcess* process;              ///< QProcess对象指针
         int pid;                         ///< 进程ID
     };
@@ -73,36 +66,15 @@ public:
     bool AddProcess(const QString& process_id,
                     const QString& executable_path,
                     const QStringList& arguments = QStringList(),
-                    const QString& working_directory = QString(),
-                    bool auto_restart = true);
+                    const QString& working_directory = QString());
 
-    /**
-     * @brief 启动进程
-     * @param process_id 进程标识符
-     * @param executable_path 可执行文件路径
-     * @param arguments 启动参数
-     */
     bool StartProcess(const QString& process_id, 
                      const QString& executable_path,
                      const QStringList& arguments = QStringList(),
-                     const QString& working_directory = QString(),
-                     bool auto_restart = false);
+                     const QString& working_directory = QString());
 
-    /**
-     * @brief 停止进程
-     * @param process_id 进程标识符
-     * @param force_kill 是否强制杀死进程
-     * @param timeout_ms 超时时间（毫秒）
-     * @return 停止是否成功
-     */
+
     bool StopProcess(const QString& process_id, bool force_kill = false, int timeout_ms = 5000);
-
-    /**
-     * @brief 重启进程
-     * @param process_id 进程标识符
-     * @return 重启是否成功
-     */
-    bool RestartProcess(const QString& process_id);
 
     /**
      * @brief 获取进程状态
@@ -154,13 +126,6 @@ public:
      * @return 心跳超时时间（毫秒）
      */
     int GetHeartbeatTimeout() const;
-
-    /**
-     * @brief 设置自动重启最大次数
-     * @param process_id 进程标识符
-     * @param max_count 最大重启次数
-     */
-    void SetMaxRestartCount(const QString& process_id, int max_count);
 
     /**
      * @brief 清理已停止的进程
@@ -300,12 +265,6 @@ private:
      */
     void StartMonitorTimer();
 
-    /**
-     * @brief 执行自动重启
-     * @param process_id 进程标识符
-     * @return 重启是否成功
-     */
-    bool ExecuteAutoRestart(const QString& process_id);
 
     /**
      * @brief 更新进程状态

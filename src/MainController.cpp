@@ -394,16 +394,15 @@ bool MainController::StartSubProcess(const QString& process_id, bool force_resta
         return false;
     }
     
-    QString executable = process_config_item["executable"].toString();
+    QString executable = process_config_item["executable_dir"].toString();
     QStringList arguments;
     QJsonArray args_array = process_config_item["arguments"].toArray();
     for (const auto& arg : args_array) {
         arguments.append(arg.toString());
     }
     QString working_dir = process_config_item["working_directory"].toString();
-    bool auto_restart = process_config_item["auto_restart"].toBool(true);
     
-    bool success = process_manager_->StartProcess(process_id, executable, arguments, working_dir, auto_restart);
+    bool success = process_manager_->StartProcess(process_id, executable, arguments, working_dir);
     
     if (success) {
         // 更新统计信息
@@ -436,27 +435,6 @@ bool MainController::StopSubProcess(const QString& process_id, int timeout_ms)
     return success;
 }
 
-bool MainController::RestartSubProcess(const QString& process_id)
-{
-    if (!process_manager_) {
-        qWarning() << "[MainController] ProcessManager未初始化";
-        return false;
-    }
-    
-    bool success = process_manager_->RestartProcess(process_id);
-    
-    if (success) {
-        // 更新统计信息
-        QMutexLocker locker(&statistics_mutex_);
-        system_statistics_.total_process_restarts++;
-        
-        qDebug() << "[MainController] 子进程重启成功:" << process_id;
-    } else {
-        qWarning() << "[MainController] 子进程重启失败:" << process_id;
-    }
-    
-    return success;
-}
 
 QJsonObject MainController::GetAllProcessInfo() const
 {
@@ -475,8 +453,6 @@ QJsonObject MainController::GetAllProcessInfo() const
             QJsonObject process_info;
             process_info["status"] = static_cast<int>(info->status);
             process_info["start_time"] = info->start_time.toString(Qt::ISODate);
-            process_info["restart_count"] = info->restart_count;
-            process_info["auto_restart"] = info->auto_restart;
             process_info["executable_path"] = info->executable_path;
             process_info["working_directory"] = info->working_directory;
             
@@ -1176,7 +1152,7 @@ bool MainController::InitializeCoreModules()
             }
 
             if (!executable.isEmpty()) {
-                process_manager_->AddProcess(process_id, executable, arguments, workdir, auto_start);
+                process_manager_->AddProcess(process_id, executable, arguments, workdir);
             } else {
                 qWarning() << "[MainController] 进程配置错误: 进程" << process_id << "缺少 'executable' 字段";
             }

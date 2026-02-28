@@ -248,15 +248,15 @@ Rectangle {
                     Rectangle {
                         Layout.preferredWidth: 80
                         Layout.preferredHeight: 28
-                        color: pluginData && pluginData.status === 3 ? "#2a5a2a" : "#5a5a2a"
-                        border.color: pluginData && pluginData.status === 3 ? "#44ff44" : "#ffaa44"
+                        color: mainController.pluginManager.isPluginInstalled(pluginData.id) ? "#2a5a2a" : "#5a5a2a"
+                        border.color: mainController.pluginManager.isPluginInstalled(pluginData.id) ? "#44ff44" : "#ffaa44"
                         border.width: 1
                         radius: 4
                         
                         Text {
                             anchors.centerIn: parent
-                            text: pluginData ? pluginData.status_text : ""
-                            color: pluginData && pluginData.status === 3 ? "#88ff88" : "#ffcc88"
+                            text: mainController.pluginManager.isPluginInstalled(pluginData.id) ? "已安装" : "未安装"
+                            color: mainController.pluginManager.isPluginInstalled(pluginData.id) ? "#88ff88" : "#ffcc88"
                             font.pixelSize: 12
                             font.bold: true
                         }
@@ -479,7 +479,7 @@ Rectangle {
                             text: {
                                 if (!pluginData) return "加载中...";
                                 if (isInstalling) return "安装中...";
-                                if (pluginData.status === 3) return "已安装";
+                                if (mainController.pluginManager.isPluginInstalled(pluginData.id)) return "已安装";
                                 return "立即安装";
                             }
                             color: "#ffffff"
@@ -515,7 +515,7 @@ Rectangle {
                         border.color: "#ff4444"
                         border.width: 2
                         radius: 6
-                        visible: pluginData && pluginData.status === 3
+                        visible: pluginData && mainController.pluginManager.isPluginInstalled(pluginData.id)
                         
                         Text {
                             anchors.centerIn: parent

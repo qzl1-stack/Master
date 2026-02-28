@@ -345,48 +345,6 @@ QJsonObject ProjectConfig::createDefaultConfig()
     // IP表
     QJsonArray defaultIpTable;
     defaultConfig["ip_table"] = defaultIpTable;
-    
-    // 子进程列表
-    QJsonArray defaultProcessList;
-    defaultProcessList.append("文件传输");
-    defaultProcessList.append("AGV分析");
-    defaultConfig["process_list"] = defaultProcessList;
-
-    // 子进程配置
-    QJsonObject processesConfig;
-    QJsonObject sftpAgentConfig;
-    sftpAgentConfig["executable"] = QCoreApplication::applicationDirPath() + "/VTA.exe"; // 假设子进程的可执行文件
-    sftpAgentConfig["arguments"] = QJsonArray(); // 空参数
-    processesConfig["文件传输"] = sftpAgentConfig;
-
-    QJsonObject logAgentConfig;
-    QString logAgentExecutable = QCoreApplication::applicationDirPath() + "/appLog_analyzer.exe";
-    logAgentConfig["executable"] = logAgentExecutable; // 假设log_agent的可执行文件
-    logAgentConfig["arguments"] = QJsonArray(); // 空参数
-    processesConfig["AGV分析"] = logAgentConfig;
-    defaultConfig["processes"] = processesConfig;
-
-    // QJsonObject serialAgentConfig;
-    // QString serialAgentExecutable = QCoreApplication::applicationDirPath() + "/SerialMate.exe";
-    // serialAgentConfig["executable"] = serialAgentExecutable; // 假设serial_agent的可执行文件
-    // serialAgentConfig["arguments"] = QJsonArray(); // 空参数
-    // processesConfig["串口分析"] = serialAgentConfig;
-    // defaultConfig["processes"] = processesConfig;
-
-    // QJsonObject uartAgentConfig;
-    // QString uartAgentExecutable = QCoreApplication::applicationDirPath() + "/wu_xc_uart_tool.exe";
-    // uartAgentConfig["executable"] = uartAgentExecutable; // 假设serial_agent的可执行文件
-    // uartAgentConfig["arguments"] = QJsonArray(); // 空参数
-    // processesConfig["吴工上位机"] = uartAgentConfig;
-    // defaultConfig["processes"] = processesConfig;
-
-    // QJsonObject agv_designConfig;
-    // QString agvDesignExecutable = QCoreApplication::applicationDirPath() + "/agv_design_tool.exe";
-    // agv_designConfig["executable"] = agvDesignExecutable; // 假设serial_agent的可执行文件
-    // agv_designConfig["arguments"] = QJsonArray(); // 空参数
-    // processesConfig["重庆AGV设计"] = agv_designConfig;
-    // defaultConfig["processes"] = processesConfig;
-
 
     // 工作目录
     QString defaultWorkDir = QCoreApplication::applicationDirPath();

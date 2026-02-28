@@ -245,7 +245,8 @@ private:
 
 private:
   static const QString kOssPluginListUrl;  // OSS插件列表URL
-  static const QString kPluginsInstallDir; // 插件安装目录
+  // static const QString kPluginsInstallDir; // 插件安装目录
+  QString plugins_dir; // 插件安装目录
 
   QNetworkAccessManager *network_manager_; // 网络访问管理器
   QNetworkReply *current_download_reply_;  // 当前下载回复

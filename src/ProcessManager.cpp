@@ -88,8 +88,7 @@ bool ProcessManager::Initialize()
 bool ProcessManager::AddProcess(const QString& process_id,
                                 const QString& executable_path,
                                 const QStringList& arguments,
-                                const QString& working_directory,
-                                bool auto_restart)
+                                const QString& working_directory)
 {
     QMutexLocker locker(&process_mutex_);
 
@@ -103,10 +102,7 @@ bool ProcessManager::AddProcess(const QString& process_id,
     info.executable_path = executable_path;
     info.arguments = arguments;
     info.working_directory = working_directory;
-    info.auto_restart = auto_restart;
     info.status = kNotRunning;
-    info.restart_count = 0;
-    info.max_restart_count = 5; // 默认最大重启次数
     info.process = nullptr;
 
     process_info_map_.insert(process_id, info);
@@ -117,8 +113,7 @@ bool ProcessManager::AddProcess(const QString& process_id,
 bool ProcessManager::StartProcess(const QString& process_id, 
                                 const QString& executable_path,
                                 const QStringList& arguments,
-                                const QString& working_directory,
-                                bool auto_restart)
+                                const QString& working_directory)
 {
     QMutexLocker locker(&process_mutex_);
     
@@ -147,9 +142,6 @@ bool ProcessManager::StartProcess(const QString& process_id,
     info.status = kStarting;
     info.start_time = QDateTime::currentDateTime();
     info.last_heartbeat = QDateTime::currentDateTime();
-    info.restart_count = 0;
-    info.auto_restart = auto_restart;
-    info.max_restart_count = 3;    // 默认最大重启3次
     info.process = CreateQProcess(process_id);
     
     if (!info.process) {
@@ -205,9 +197,6 @@ bool ProcessManager::StopProcess(const QString& process_id, bool force_kill, int
         return false;
     }
     
-    // 禁用自动重启
-    info.auto_restart = false;
-    
     if (force_kill) {
         // 强制杀死进程
         info.process->kill();
@@ -232,47 +221,6 @@ bool ProcessManager::StopProcess(const QString& process_id, bool force_kill, int
     
     qDebug() << "[ProcessManager] 进程停止成功:" << process_id;
     return true;
-}
-
-bool ProcessManager::RestartProcess(const QString& process_id)
-{
-    QMutexLocker locker(&process_mutex_);
-    
-    auto it = process_info_map_.find(process_id);
-    if (it == process_info_map_.end()) {
-        qWarning() << "[ProcessManager] 重启失败，进程不存在:" << process_id;
-        return false;
-    }
-    
-    ProcessInfo& info = it.value();
-    
-    qDebug() << "[ProcessManager] 重启进程:" << process_id;
-    
-    // 先停止进程（不修改process_mutex_的锁状态）
-    if (info.process && info.status != kNotRunning) {
-        info.auto_restart = false;  // 临时禁用自动重启
-        info.process->terminate();
-        if (!info.process->waitForFinished(5000)) {
-            info.process->kill();
-            info.process->waitForFinished(2000);
-        }
-    }
-    
-    // 重新启动
-    locker.unlock(); // 释放锁，避免递归锁定
-    bool success = StartProcess(process_id, info.executable_path, info.arguments, 
-                              info.working_directory, true); // 重启时启用自动重启
-    
-    if (success) {
-        locker.relock();
-        auto restart_it = process_info_map_.find(process_id);
-        if (restart_it != process_info_map_.end()) {
-            restart_it->restart_count++;
-            emit ProcessAutoRestarted(process_id, restart_it->restart_count);
-        }
-    }
-    
-    return success;
 }
 
 ProcessManager::ProcessStatus ProcessManager::GetProcessStatus(const QString& process_id) const
@@ -331,7 +279,6 @@ bool ProcessManager::StopAllProcesses(int timeout_ms)
         for (auto it = process_info_map_.begin(); it != process_info_map_.end(); ++it) {
             if (it->status == kRunning && it->process) {
                 process_list.append(it.key());
-                it->auto_restart = false;
                 it->process->terminate();
                 UpdateProcessStatus(it.key(), kStopping);
                 proc_ptrs.append(it->process);
@@ -400,17 +347,6 @@ int ProcessManager::GetHeartbeatTimeout() const
     return heartbeat_timeout_ms_;
 }
 
-void ProcessManager::SetMaxRestartCount(const QString& process_id, int max_count)
-{
-    QMutexLocker locker(&process_mutex_);
-    
-    auto it = process_info_map_.find(process_id);
-    if (it != process_info_map_.end()) {
-        it->max_restart_count = max_count;
-        qDebug() << "[ProcessManager] 设置进程" << process_id << "最大重启次数:" << max_count;
-    }
-}
-
 void ProcessManager::CleanupStoppedProcesses()
 {
     QMutexLocker locker(&process_mutex_);
@@ -468,23 +404,7 @@ void ProcessManager::HandleProcessFinished(int exit_code, QProcess::ExitStatus e
     if (it == process_info_map_.end()) {
         return;
     }
-    
-    ProcessInfo& info = it.value();
-    
-    if (exit_status == QProcess::CrashExit) {
-        UpdateProcessStatus(process_id, kCrashed);
-        emit ProcessCrashed(process_id, QString("进程崩溃，退出码: %1").arg(exit_code));
-        
-        // 检查是否需要自动重启
-        if (info.auto_restart && info.restart_count < info.max_restart_count) {
-            qDebug() << "[ProcessManager] 准备自动重启崩溃的进程:" << process_id;
-            locker.unlock();
-            ExecuteAutoRestart(process_id);
-            return;
-        }
-    } else {
-        UpdateProcessStatus(process_id, kNotRunning);
-    }
+    UpdateProcessStatus(process_id, kNotRunning);
     
     emit ProcessStopped(process_id, exit_code);
 }
@@ -593,19 +513,6 @@ void ProcessManager::CheckHeartbeat()
     for (const QString& process_id : timeout_processes) {
         qWarning() << "[ProcessManager] 进程心跳超时:" << process_id;
         emit HeartbeatTimeout(process_id);
-        
-        // auto it = process_info_map_.find(process_id);
-        // if (it != process_info_map_.end()) {
-        //     ProcessInfo& info = it.value();
-            
-        //     // 如果启用自动重启且重启次数未超限，则重启进程
-        //     if (info.auto_restart && info.restart_count < info.max_restart_count) {
-        //         qDebug() << "[ProcessManager] 心跳超时，准备自动重启进程:" << process_id;
-        //         locker.unlock();
-        //         ExecuteAutoRestart(process_id);
-        //         locker.relock();
-        //     }
-        // }
     }
 }
 
@@ -688,44 +595,6 @@ void ProcessManager::StartMonitorTimer()
     
     monitor_timer_->start(monitor_check_interval_ms_);
     qDebug() << "[ProcessManager] 启动进程监控定时器，间隔:" << monitor_check_interval_ms_ << "ms";
-}
-
-bool ProcessManager::ExecuteAutoRestart(const QString& process_id)
-{
-    QMutexLocker locker(&process_mutex_);
-    
-    auto it = process_info_map_.find(process_id);
-    if (it == process_info_map_.end()) {
-        qWarning() << "[ProcessManager] 自动重启失败，进程不存在:" << process_id;
-        return false;
-    }
-    
-    ProcessInfo& info = it.value();
-    
-    if (info.restart_count >= info.max_restart_count) {
-        qWarning() << "[ProcessManager] 进程" << process_id << "重启次数已达上限:" << info.restart_count;
-        return false;
-    }
-    
-    qDebug() << "[ProcessManager] 执行自动重启:" << process_id << "当前重启次数:" << info.restart_count;
-    
-    QString executable_path = info.executable_path;
-    QStringList arguments = info.arguments;
-    QString working_directory = info.working_directory;
-    bool auto_restart = info.auto_restart;
-    
-    locker.unlock();
-    
-    // 重启进程
-    bool success = RestartProcess(process_id);
-    
-    if (success) {
-        qDebug() << "[ProcessManager] 自动重启成功:" << process_id;
-    } else {
-        qWarning() << "[ProcessManager] 自动重启失败:" << process_id;
-    }
-    
-    return success;
 }
 
 void ProcessManager::UpdateProcessStatus(const QString& process_id, ProcessStatus new_status)

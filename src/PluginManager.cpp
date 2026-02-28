@@ -19,7 +19,6 @@
 
 const QString PluginManager::kOssPluginListUrl =
     "https://jts-tools-extensions.oss-cn-chengdu.aliyuncs.com/plugins.json";
-const QString PluginManager::kPluginsInstallDir = "plugins";
 
 PluginManager::PluginManager(QObject *parent)
     : QObject(parent), network_manager_(nullptr),
@@ -49,10 +48,18 @@ bool PluginManager::Initialize() {
   qDebug() << "[PluginManager] 开始初始化插件管理器";
 
   // 创建插件安装目录
-  QString app_dir_path = QCoreApplication::applicationDirPath();
-  QString plugins_dir = app_dir_path + "/" + kPluginsInstallDir;
+  QString home_path = QStandardPaths::writableLocation(QStandardPaths::HomeLocation);
+  QString jt_studio_dir = home_path + "/.jt_studio";
+  plugins_dir = jt_studio_dir + "/plugins";
 
   QDir dir;
+  if (!dir.exists(jt_studio_dir)) {
+    if (!dir.mkpath(jt_studio_dir)) {
+      qWarning() << "[PluginManager] 创建 .jt_studio 目录失败:" << jt_studio_dir;
+      return false;
+    }
+  }
+
   if (!dir.exists(plugins_dir)) {
     if (!dir.mkpath(plugins_dir)) {
       qWarning() << "[PluginManager] 创建插件目录失败:" << plugins_dir;
@@ -323,6 +330,7 @@ void PluginManager::OnDownloadFinished() {
 
   qDebug() << "[PluginManager] 插件下载完成:" << plugin_id;
 
+
   // 保存下载的文件
   QString temp_dir =
       QStandardPaths::writableLocation(QStandardPaths::TempLocation);
@@ -341,9 +349,7 @@ void PluginManager::OnDownloadFinished() {
   qDebug() << "[PluginManager] 插件文件已保存:" << zip_file_path;
 
   // 解压插件
-  QString app_dir_path = QCoreApplication::applicationDirPath();
-  QString extract_path =
-      app_dir_path + "/" + kPluginsInstallDir + "/" + plugin_id;
+  QString extract_path = this->plugins_dir;
 
   if (!ExtractPlugin(zip_file_path, extract_path)) {
     qWarning() << "[PluginManager] 解压插件失败:" << plugin_id;
@@ -478,9 +484,7 @@ bool PluginManager::RegisterPluginToProcessManager(
       process_manager.AddProcess(plugin_info.name, // 进程ID（使用插件名称）
                                  executable_path,  // 可执行文件路径
                                  QStringList(),    // 启动参数
-                                 plugin_info.install_path, // 工作目录
-                                 false                     // 不自动重启
-      );
+                                 plugin_info.install_path);
 
   if (!success) {
     qWarning() << "[PluginManager] 添加插件到进程管理器失败:" << plugin_info.id;
@@ -547,11 +551,21 @@ void PluginManager::uninstallPlugin(const QString &plugin_id) {
 }
 
 bool PluginManager::isPluginInstalled(const QString &plugin_id) const {
-  QMutexLocker locker(&plugins_mutex_);
+  // 从配置文件查询已安装的插件，确保持久化存储的准确性
+  ProjectConfig &config = ProjectConfig::getInstance();
+  QJsonValue installed_value = config.getConfigValue("installed_plugins");
 
-  for (const PluginInfo &info : installed_plugins_) {
-    if (info.id == plugin_id) {
-      return true;
+  if (!installed_value.isArray()) {
+    return false;
+  }
+
+  QJsonArray installed_array = installed_value.toArray();
+  for (const QJsonValue &value : installed_array) {
+    if (value.isObject()) {
+      QJsonObject plugin_obj = value.toObject();
+      if (plugin_obj.value("id").toString() == plugin_id) {
+        return true;
+      }
     }
   }
 
@@ -614,35 +628,54 @@ void PluginManager::SaveInstalledPluginsToConfig() {
   qDebug() << "[PluginManager] 保存已安装插件到配置";
 
   QJsonArray installed_array;
+  QJsonArray process_list;
+  QJsonObject processes;
+
+  ProjectConfig &config = ProjectConfig::getInstance();
+
+  // 获取现有的 process_list 和 processes 配置
+  QJsonValue existing_process_list = config.getConfigValue("process_list");
+  QJsonValue existing_processes = config.getConfigValue("processes");
+
+  if (existing_process_list.isArray()) {
+    process_list = existing_process_list.toArray();
+  }
+  if (existing_processes.isObject()) {
+    processes = existing_processes.toObject();
+  }
 
   QMutexLocker locker(&plugins_mutex_);
   for (const PluginInfo &info : installed_plugins_) {
     QJsonObject plugin_obj;
-    plugin_obj["id"] = info.id;
     plugin_obj["name"] = info.name;
     plugin_obj["version"] = info.version;
-    plugin_obj["author"] = info.author;
-    plugin_obj["description"] = info.description;
-    plugin_obj["detailed_description"] = info.detailed_description;
-    plugin_obj["icon_type"] = info.icon_type;
-    plugin_obj["category"] = info.category;
-    plugin_obj["download_url"] = info.download_url;
-    plugin_obj["download_size"] = info.download_size;
-    plugin_obj["executable"] = info.executable;
-    plugin_obj["required_version"] = info.required_version;
-    plugin_obj["install_path"] = info.install_path;
-
-    QJsonArray deps_array;
-    for (const QString &dep : info.dependencies) {
-      deps_array.append(dep);
-    }
-    plugin_obj["dependencies"] = deps_array;
+    QString executable_dir = plugins_dir + "/" + info.id + "/" + info.executable;
+    plugin_obj["executable_dir"] = executable_dir;
 
     installed_array.append(plugin_obj);
+
+    // 更新 process_list 和 processes
+    bool found = false;
+    for (const QJsonValue &value : process_list) {
+      if (value.toString() == info.name) {
+        found = true;
+        break;
+      }
+    }
+    if (!found) {
+      process_list.append(info.name);
+    }
+
+    QJsonObject process_obj;
+    process_obj["executable_dir"] = executable_dir;
+    process_obj["version"] = info.version;
+    processes[info.name] = process_obj;
   }
 
-  ProjectConfig &config = ProjectConfig::getInstance();
+  // 保存所有配置
   config.setConfigValue("installed_plugins", installed_array);
+  config.setConfigValue("process_list", process_list);
+  config.setConfigValue("processes", processes);
   config.saveConfig();
 
   qDebug() << "[PluginManager] 已安装插件配置已保存";
