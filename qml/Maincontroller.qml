@@ -56,12 +56,53 @@ Rectangle {
 
         // 插件列表更新时，从 C++ 端重新拉取列表数据刷新 QML 属性
         function onPluginListUpdated() {
+            var previousIndex = sidebarPluginListView.currentIndex;
+            var selectedPluginId = "";
+            var selectedPluginName = "";
+
+            if (previousIndex >= 0 && previousIndex < pluginList.length) {
+                var selected = pluginList[previousIndex];
+                selectedPluginId = selected.id || "";
+                selectedPluginName = selected.name || "";
+            }
+
             pluginList = pluginManagerInstance.getAvailablePlugins();
+
+            if (pluginList.length === 0) {
+                sidebarPluginListView.currentIndex = -1;
+                return;
+            }
+
+            var restoredIndex = -1;
+            for (var i = 0; i < pluginList.length; i++) {
+                var item = pluginList[i];
+                if ((selectedPluginId !== "" && item.id === selectedPluginId)
+                        || (selectedPluginName !== ""
+                            && item.name === selectedPluginName)) {
+                    restoredIndex = i;
+                    break;
+                }
+            }
+
+            if (restoredIndex >= 0) {
+                sidebarPluginListView.currentIndex = restoredIndex;
+            } else if (previousIndex >= 0 && previousIndex < pluginList.length) {
+                sidebarPluginListView.currentIndex = previousIndex;
+            } else {
+                sidebarPluginListView.currentIndex = -1;
+            }
         }
 
         // 日志消息信号：将 C++ 发出的日志写入 QML 日志面板
         function onLogMessage(message) {
             appendLog(message);
+        }
+
+        // 插件安装完成时，刷新进程列表
+        function onInstallCompleted(plugin_id, success, error_message) {
+            if (success) {
+                updateProcessList();
+            }
         }
     }
 
@@ -79,8 +120,6 @@ Rectangle {
             Layout.preferredWidth: 56
             Layout.fillHeight: true
             color: "#252526"
-            // border.color: "#3e3e42"
-            // border.width: 1
 
             ColumnLayout {
                 anchors.fill: parent
@@ -2226,7 +2265,6 @@ Rectangle {
     function updateSystemStatus() {
         if (mainController && systemStarted) {
             // 更新进程状态
-            // updateProcessList()
             var statusJson = mainController.GetAllProcessInfo();
             parseProcessStatus(statusJson);
             // 更新IP列表
@@ -2275,27 +2313,14 @@ Rectangle {
     * @brief 更新进程列表和状态
     */
     function updateProcessList() {
-        // 1. 保存当前选中项索引
-        // var oldIndex = sidebarProcessListView.currentIndex;
-
-        // 2. 获取初始进程名称列表并设置为默认状态
         var configuredNames = mainController.GetConfiguredProcessNames();
         var initialProcesses = [];
         for (var i = 0; i < configuredNames.length; i++) {
             initialProcesses.push({
                 name: configuredNames[i],
-                status: "未运行" // 默认状态
             });
         }
         processStatusList = initialProcesses;
-
-        // 3. 获取所有进程的实时状态并更新列表
-        try {
-            var statusJson = mainController.GetAllProcessInfo();
-            parseProcessStatus(statusJson);
-        } catch (e) {
-            console.log("更新进程列表失败: " + e.message);
-        }
     }
 
     /**
@@ -2551,25 +2576,6 @@ Rectangle {
             }
         }
     }
-
-    /**
-    * @brief 停止指定进程
-    */
-    function stopProcessById(processName) {
-        if (mainController && processName) {
-            var result = mainController.StopSubProcess(processName);
-            if (result) {
-                appendLog("停止进程成功: " + processName);
-                updateProcessList();
-
-                // 更新打开的标签页中的进程数据
-                updateProcessTabsData();
-            } else {
-                appendLog("停止进程失败: " + processName);
-            }
-        }
-    }
-
     /**
     * @brief 更新进程标签页中的数据
     */

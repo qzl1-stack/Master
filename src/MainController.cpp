@@ -1386,9 +1386,8 @@ void MainController::ConnectModuleSignals()
                 this, &MainController::HandleProcessStatusChanged);
         connect(process_manager_, &ProcessManager::HeartbeatTimeout,
                 this, &MainController::HandleProcessHeartbeatTimeout);
-        connect(process_manager_, &ProcessManager::ProcessAutoRestarted,
-                this, &MainController::SubProcessAutoRestarted);
     }
+    
     
     // 连接ProjectConfig信号（如果有文件监控）
     if (project_config_) {
@@ -1424,7 +1423,6 @@ void MainController::ConnectModuleSignals()
                 });
     }
 }
-
 
 void MainController::TriggerEventCallback(const QString& event_type, const QJsonObject& event_data)
 {

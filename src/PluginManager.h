@@ -127,12 +127,6 @@ public:
    */
   Q_INVOKABLE bool isPluginInstalled(const QString &plugin_id) const;
 
-  /**
-   * @brief 获取插件安装路径
-   * @param plugin_id 插件ID
-   * @return 插件安装路径
-   */
-  QString GetPluginInstallPath(const QString &plugin_id) const;
 
   /**
    * @brief 格式化文件大小为易读的形式
@@ -220,18 +214,6 @@ private:
   bool ExtractPlugin(const QString &zip_file_path, const QString &extract_path);
 
   /**
-   * @brief 注册插件到进程管理器
-   * @param plugin_info 插件信息
-   * @return 注册是否成功
-   */
-  bool RegisterPluginToProcessManager(const PluginInfo &plugin_info);
-
-  /**
-   * @brief 从配置加载已安装插件
-   */
-  void LoadInstalledPluginsFromConfig();
-
-  /**
    * @brief 保存已安装插件到配置
    */
   void SaveInstalledPluginsToConfig();
@@ -245,7 +227,6 @@ private:
 
 private:
   static const QString kOssPluginListUrl;  // OSS插件列表URL
-  // static const QString kPluginsInstallDir; // 插件安装目录
   QString plugins_dir; // 插件安装目录
 
   QNetworkAccessManager *network_manager_; // 网络访问管理器

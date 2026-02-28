@@ -189,7 +189,6 @@ signals:
     void SubProcessStarted(const QString& process_id, const QJsonObject& process_info);
     void SubProcessStopped(const QString& process_id, int exit_code);
     void SubProcessCrashed(const QString& process_id, const QString& error_message);
-    void SubProcessAutoRestarted(const QString& process_id, int restart_count);
     
     // ==================== IPC通信信号 ====================
     
@@ -220,7 +219,6 @@ private slots:
     void HandleIpcConnectionEvent(const QString& client_id, bool connected);
     
     void HandleConfigurationFileChanged(const QString& file_path);
-    
     
     void PerformSystemHealthCheck();
     

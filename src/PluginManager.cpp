@@ -68,7 +68,7 @@ bool PluginManager::Initialize() {
   }
 
   // 从配置加载已安装插件
-  LoadInstalledPluginsFromConfig();
+  // LoadInstalledPluginsFromConfig();
 
   is_initialized_ = true;
   qDebug() << "[PluginManager] 插件管理器初始化完成";
@@ -372,15 +372,8 @@ void PluginManager::OnDownloadFinished() {
       if (info.id == plugin_id) {
         info.status = kInstalled;
         info.install_path = extract_path;
-
         // 添加到已安装列表
         installed_plugins_.append(info);
-
-        // 注册到进程管理器
-        if (!RegisterPluginToProcessManager(info)) {
-          qWarning() << "[PluginManager] 注册插件到进程管理器失败:"
-                     << plugin_id;
-        }
 
         break;
       }
@@ -462,39 +455,6 @@ bool PluginManager::ExtractPlugin(const QString &zip_file_path,
 #endif
 }
 
-bool PluginManager::RegisterPluginToProcessManager(
-    const PluginInfo &plugin_info) {
-  qDebug() << "[PluginManager] 注册插件到进程管理器:" << plugin_info.id;
-
-  // 获取ProcessManager实例
-  ProcessManager &process_manager = ProcessManager::GetInstance();
-
-  // 构建可执行文件完整路径
-  QString executable_path =
-      plugin_info.install_path + "/" + plugin_info.executable;
-
-  // 检查可执行文件是否存在
-  if (!QFile::exists(executable_path)) {
-    qWarning() << "[PluginManager] 插件可执行文件不存在:" << executable_path;
-    return false;
-  }
-
-  // 添加到进程管理器
-  bool success =
-      process_manager.AddProcess(plugin_info.name, // 进程ID（使用插件名称）
-                                 executable_path,  // 可执行文件路径
-                                 QStringList(),    // 启动参数
-                                 plugin_info.install_path);
-
-  if (!success) {
-    qWarning() << "[PluginManager] 添加插件到进程管理器失败:" << plugin_info.id;
-    return false;
-  }
-
-  qDebug() << "[PluginManager] 插件已注册到进程管理器:" << plugin_info.name;
-  return true;
-}
-
 void PluginManager::uninstallPlugin(const QString &plugin_id) {
   qDebug() << "[PluginManager] 开始卸载插件:" << plugin_id;
 
@@ -553,76 +513,29 @@ void PluginManager::uninstallPlugin(const QString &plugin_id) {
 bool PluginManager::isPluginInstalled(const QString &plugin_id) const {
   // 从配置文件查询已安装的插件，确保持久化存储的准确性
   ProjectConfig &config = ProjectConfig::getInstance();
-  QJsonValue installed_value = config.getConfigValue("installed_plugins");
+  QJsonValue process_list_value = config.getConfigValue("process_list");
 
-  if (!installed_value.isArray()) {
+  if (!process_list_value.isArray()) {
     return false;
   }
 
-  QJsonArray installed_array = installed_value.toArray();
-  for (const QJsonValue &value : installed_array) {
-    if (value.isObject()) {
-      QJsonObject plugin_obj = value.toObject();
-      if (plugin_obj.value("id").toString() == plugin_id) {
-        return true;
-      }
+  QJsonArray process_list = process_list_value.toArray();
+  for (const QJsonValue &value : process_list) {
+    if (value.toString() == plugin_id) {
+      return true;
     }
   }
 
   return false;
 }
 
-QString PluginManager::GetPluginInstallPath(const QString &plugin_id) const {
-  QMutexLocker locker(&plugins_mutex_);
-
-  for (const PluginInfo &info : installed_plugins_) {
-    if (info.id == plugin_id) {
-      return info.install_path;
-    }
-  }
-
-  return QString();
-}
 
 QList<PluginManager::PluginInfo> PluginManager::GetAllPlugins() const {
   QMutexLocker locker(&plugins_mutex_);
   return available_plugins_;
 }
 
-void PluginManager::LoadInstalledPluginsFromConfig() {
-  qDebug() << "[PluginManager] 从配置加载已安装插件";
 
-  ProjectConfig &config = ProjectConfig::getInstance();
-  QJsonValue installed_value = config.getConfigValue("installed_plugins");
-
-  if (!installed_value.isArray()) {
-    qDebug() << "[PluginManager] 配置中没有已安装插件信息";
-    return;
-  }
-
-  QJsonArray installed_array = installed_value.toArray();
-
-  QMutexLocker locker(&plugins_mutex_);
-  installed_plugins_.clear();
-
-  for (const QJsonValue &value : installed_array) {
-    if (!value.isObject()) {
-      continue;
-    }
-
-    PluginInfo info = ParsePluginInfo(value.toObject());
-    info.status = kInstalled;
-    info.install_path = value.toObject().value("install_path").toString();
-
-    installed_plugins_.append(info);
-
-    // 注册到进程管理器
-    RegisterPluginToProcessManager(info);
-  }
-
-  qDebug() << "[PluginManager] 加载了" << installed_plugins_.size()
-           << "个已安装插件";
-}
 
 void PluginManager::SaveInstalledPluginsToConfig() {
   qDebug() << "[PluginManager] 保存已安装插件到配置";
