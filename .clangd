@@ -1,6 +1,0 @@
-Diagnostics:
-  Suppress:
-    - "*"
-CompileFlags:
-  Add:
-    - "-ferror-limit=0"
