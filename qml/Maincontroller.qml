@@ -773,8 +773,6 @@ Rectangle {
                             Layout.fillWidth: true
                             Layout.preferredHeight: 35
                             color: "#252526"
-                            // border.color: "#3e3e42"
-                            // border.width: 1
 
                             ScrollView {
                                 anchors.fill: parent
@@ -1382,7 +1380,8 @@ Rectangle {
         id: tabDelegate
 
         Rectangle {
-            width: Math.max(120, tabText.implicitWidth + 40)
+            // 标签宽度动态变化：根据标题长度完整展示文本
+            width: Math.max(90, tabText.implicitWidth + 64)
             height: 35
             color: index === currentTabIndex ? "#1e1e1e" : (tabMouseArea.containsMouse ? "#2d2d30" : "#252526")
             border.color: index === currentTabIndex ? "#007acc" : "#3e3e42"
@@ -1393,15 +1392,23 @@ Rectangle {
                 anchors.fill: parent
                 hoverEnabled: true
                 onClicked: {
-                    currentTabIndex = index;
-                    pendingEmbedProcess = modelData.title;
+                currentTabIndex = index;
+                pendingEmbedProcess = modelData.title;
+                if (mainController) {
+                     for (var j = 0; j < openTabs.length; j++) {
+                          if (openTabs[j].type === "process" && openTabs[j].data && openTabs[j].data.name) {
+                              mainController.SetEmbeddedProcessWindowVisible(openTabs[j].data.name, false);
+                        }
+                      }
+                   }
                 }
             }
 
             RowLayout {
+                id: tabRow
                 anchors.fill: parent
                 anchors.margins: 8
-                spacing: 8
+                spacing: 4
 
                 Text {
                     id: tabText
@@ -1409,11 +1416,11 @@ Rectangle {
                     color: index === currentTabIndex ? "#cccccc" : "#999999"
                     font.pixelSize: 12
                     Layout.fillWidth: true
-                    elide: Text.ElideRight
+                    elide: Text.ElideNone
+                    wrapMode: Text.NoWrap
                 }
 
                 Button {
-                    // visible: tabMouseArea.containsMouse || openTabs.length > 1
                     text: "×"
                     Layout.preferredWidth: 25
                     Layout.preferredHeight: 25
@@ -2519,6 +2526,15 @@ Rectangle {
             stackLayout.pop(null);
         }
 
+        // 隐藏所有已打开的进程窗口
+        if (mainController) {
+            for (var j = 0; j < openTabs.length; j++) {
+                if (openTabs[j].type === "process" && openTabs[j].data && openTabs[j].data.name) {
+                    mainController.SetEmbeddedProcessWindowVisible(openTabs[j].data.name, false);
+                }
+            }
+        }
+
         var existingIndex = -1;
         for (var i = 0; i < openTabs.length; i++) {
             if (openTabs[i].type === "plugin_detail" && openTabs[i].data && openTabs[i].data.id === pluginData.id) {
@@ -2532,7 +2548,7 @@ Rectangle {
         } else {
             var newTab = {
                 type: "plugin_detail",
-                title: pluginData.name || "未知插件",
+                title: "工具：" + (pluginData.name || "未知插件"),
                 data: pluginData
             };
             openTabs.push(newTab);

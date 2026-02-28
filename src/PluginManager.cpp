@@ -661,7 +661,7 @@ void PluginManager::SaveInstalledPluginsToConfig() {
   }
 
   // 保存所有配置
-  config.setConfigValue("installed_plugins", installed_array);
+  // config.setConfigValue("installed_plugins", installed_array);
   config.setConfigValue("process_list", process_list);
   config.setConfigValue("processes", processes);
   config.saveConfig();

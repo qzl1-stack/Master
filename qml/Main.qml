@@ -20,6 +20,7 @@ ApplicationWindow {
     height: 900
     visible: true
     visibility: Window.Maximized
+    property bool restore_maximized_after_minimize: false
 
     // 去除原生窗口栏，实现无边框
     flags: Qt.Window | Qt.FramelessWindowHint
@@ -219,7 +220,11 @@ ApplicationWindow {
                     background: Rectangle {
                         color: parent.hovered ? "#333333" : "transparent"
                     }
-                    onClicked: mainWindow.showMinimized()
+                    onClicked: {
+                        mainWindow.restore_maximized_after_minimize =
+                                mainWindow.visibility === Window.Maximized;
+                        mainWindow.showMinimized();
+                    }
                 }
 
                 Button {
@@ -271,6 +276,18 @@ ApplicationWindow {
     property bool workspaceSelected: false
     property string currentWorkspacePath: ""
     property int currentViewIndex: 0
+
+    onVisibilityChanged: {
+        if (visibility === Window.Windowed &&
+                mainWindow.restore_maximized_after_minimize) {
+            mainWindow.restore_maximized_after_minimize = false;
+            Qt.callLater(function () {
+                if (mainWindow.visibility === Window.Windowed) {
+                    mainWindow.showMaximized();
+                }
+            });
+        }
+    }
 
     // ==================== 主容器布局 ====================
     ColumnLayout {

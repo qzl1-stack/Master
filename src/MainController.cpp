@@ -88,9 +88,11 @@ bool MainController::Initialize(const QString& config_file_path)
     try {
         // 设置配置文件路径
         if (config_file_path.isEmpty()) {
-            // 获取可执行文件所在目录
-            QString exe_dir = QCoreApplication::applicationDirPath();
-            QDir config_dir(exe_dir + "/Config");
+            // 默认将配置文件放在用户主目录下的 .jt_studio 目录
+            QString home_path =
+                QStandardPaths::writableLocation(
+                    QStandardPaths::HomeLocation);
+            QDir config_dir(home_path + "/.jt_studio");
             if (!config_dir.exists()) {
                 config_dir.mkpath(".");
             }
