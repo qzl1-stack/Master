@@ -9,6 +9,7 @@
 #include <QNetworkRequest>
 #include <QProcess>
 #include <QStandardPaths>
+#include <QThread>
 
 
 // 引入Qt私有API进行ZIP解压（如果可用）
@@ -455,58 +456,132 @@ bool PluginManager::ExtractPlugin(const QString &zip_file_path,
 #endif
 }
 
-void PluginManager::uninstallPlugin(const QString &plugin_id) {
-  qDebug() << "[PluginManager] 开始卸载插件:" << plugin_id;
+void PluginManager::uninstallPlugin(const QString &plugin_name) {
+  qDebug() << "[PluginManager] 开始卸载插件:" << plugin_name;
 
-  QMutexLocker locker(&plugins_mutex_);
+  // 从配置文件查询已安装的插件，确保数据最新（避免程序重启后内存不同步）
+  ProjectConfig &config = ProjectConfig::getInstance();
+  
+  // 从 process_list 中查找插件
+  QJsonValue process_list_value = config.getConfigValue("process_list");
+  if (!process_list_value.isArray()) {
+    qWarning() << "[PluginManager] 配置中没有进程列表";
+    emit uninstallCompleted(plugin_name, false);
+    return;
+  }
 
-  // 查找已安装的插件
-  int index = -1;
-  for (int i = 0; i < installed_plugins_.size(); ++i) {
-    if (installed_plugins_[i].id == plugin_id) {
-      index = i;
+  QJsonArray process_list = process_list_value.toArray();
+  
+  // 检查插件是否存在于 process_list 中
+  bool found = false;
+  for (const QJsonValue &value : process_list) {
+    if (value.toString() == plugin_name) {
+      found = true;
       break;
     }
   }
 
-  if (index == -1) {
-    qWarning() << "[PluginManager] 插件未安装:" << plugin_id;
-    emit uninstallCompleted(plugin_id, false);
+  if (!found) {
+    qWarning() << "[PluginManager] 插件未安装:" << plugin_name;
+    emit uninstallCompleted(plugin_name, false);
     return;
   }
 
-  PluginInfo plugin_info = installed_plugins_[index];
+  // 从 processes 对象中获取该插件的配置
+  QJsonValue processes_value = config.getConfigValue("processes");
+  if (!processes_value.isObject()) {
+    qWarning() << "[PluginManager] 配置中没有进程详细信息";
+    emit uninstallCompleted(plugin_name, false);
+    return;
+  }
 
-  // 从进程管理器中移除
-  ProcessManager &process_manager = ProcessManager::GetInstance();
-  process_manager.StopProcess(plugin_info.name, true);
+  QJsonObject processes = processes_value.toObject();
+  QJsonObject plugin_config = processes.value(plugin_name).toObject();
+  
+  if (plugin_config.isEmpty()) {
+    qWarning() << "[PluginManager] 找不到插件配置:" << plugin_name;
+    emit uninstallCompleted(plugin_name, false);
+    return;
+  }
 
-  // 删除插件文件
-  QDir plugin_dir(plugin_info.install_path);
+  // 从 executable_dir 提取安装目录路径
+  QString executable_dir = plugin_config.value("executable_dir").toString();
+  if (executable_dir.isEmpty()) {
+    qWarning() << "[PluginManager] 插件没有可执行文件路径:" << plugin_name;
+    emit uninstallCompleted(plugin_name, false);
+    return;
+  }
+
+  // 提取目录部分（去掉可执行文件名）
+  QFileInfo file_info(executable_dir);
+  QString install_path = file_info.absolutePath();
+
+  QMutexLocker locker(&plugins_mutex_);
+
+  // 删除插件目录（带重试机制，处理 Windows 文件锁）
+  QDir plugin_dir(install_path);
   if (plugin_dir.exists()) {
-    if (!plugin_dir.removeRecursively()) {
-      qWarning() << "[PluginManager] 删除插件目录失败:"
-                 << plugin_info.install_path;
+    bool delete_success = false;
+    const int max_retries = 3;
+    const int retry_delay_ms = 100;
+    
+    for (int attempt = 0; attempt < max_retries; ++attempt) {
+      if (plugin_dir.removeRecursively()) {
+        delete_success = true;
+        qDebug() << "[PluginManager] 插件目录已删除:" << install_path;
+        break;
+      } else {
+        qWarning() << "[PluginManager] 删除插件目录失败（第" << (attempt + 1) << "次尝试）:" << install_path;
+        // 等待后重试
+        if (attempt < max_retries - 1) {
+          QThread::msleep(retry_delay_ms);
+        }
+      }
+    }
+    
+    if (!delete_success) {
+      qWarning() << "[PluginManager] 删除插件目录最终失败，目录可能被占用:" << install_path;
     }
   }
 
-  // 从已安装列表中移除
-  installed_plugins_.removeAt(index);
+  // 从内存中的已安装列表移除（如果存在）
+  for (int i = 0; i < installed_plugins_.size(); ++i) {
+    if (installed_plugins_[i].name == plugin_name) {
+      installed_plugins_.removeAt(i);
+      break;
+    }
+  }
 
   // 更新可用列表中的状态
   for (PluginInfo &info : available_plugins_) {
-    if (info.id == plugin_id) {
+    if (info.name == plugin_name) {
       info.status = kNotInstalled;
       info.install_path.clear();
       break;
     }
   }
 
-  // 保存配置
-  SaveInstalledPluginsToConfig();
+  // 从 process_list 中移除
+  QJsonArray new_process_list;
+  for (const QJsonValue &value : process_list) {
+    if (value.toString() != plugin_name) {
+      new_process_list.append(value);
+    }
+  }
+  config.setConfigValue("process_list", new_process_list);
 
-  qDebug() << "[PluginManager] 插件卸载完成:" << plugin_id;
-  emit uninstallCompleted(plugin_id, true);
+  // 从 processes 对象中移除
+  processes.remove(plugin_name);
+  config.setConfigValue("processes", processes);
+
+  config.saveConfig();
+
+  qDebug() << "[PluginManager] 插件卸载完成:" << plugin_name;
+  
+  // 在发射信号前释放互斥量，避免死锁
+  locker.unlock();
+  
+  emit uninstallCompleted(plugin_name, true);
   emit pluginListUpdated();
 }
 

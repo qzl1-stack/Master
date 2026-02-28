@@ -116,9 +116,9 @@ public:
 
   /**
    * @brief 卸载插件
-   * @param plugin_id 插件ID
+   * @param plugin_name 插件名称（process_list 中的值）
    */
-  Q_INVOKABLE void uninstallPlugin(const QString &plugin_id);
+  Q_INVOKABLE void uninstallPlugin(const QString &plugin_name);
 
   /**
    * @brief 检查插件是否已安装
@@ -171,10 +171,10 @@ signals:
 
   /**
    * @brief 插件卸载完成信号
-   * @param plugin_id 插件ID
+   * @param plugin_name 插件名称
    * @param success 是否成功
    */
-  void uninstallCompleted(const QString &plugin_id, bool success);
+  void uninstallCompleted(const QString &plugin_name, bool success);
 
 private slots:
   /**

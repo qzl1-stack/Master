@@ -229,14 +229,14 @@ bool MainController::Stop(int timeout_ms)
             data_store_->setValue("system.shutdown_reason", "normal");
         }
 
-        // 5. 停止所有子进程（作为兜底）
-        if (process_manager_)
-        {
-            if (!process_manager_->StopAllProcesses(timeout_ms / 2)) {
-                qWarning() << "[MainController] 部分子进程停止超时";
-            }
-        }
-        qDebug() << "[MainController] 所有子进程已停止";
+        // // 5. 停止所有子进程（作为兜底）
+        // if (process_manager_)
+        // {
+        //     if (!process_manager_->StopAllProcesses(timeout_ms / 2)) {
+        //         qWarning() << "[MainController] 部分子进程停止超时";
+        //     }
+        // }
+        // qDebug() << "[MainController] 所有子进程已停止";
 
         
         UpdateInitializationState(kStopped);
@@ -480,6 +480,14 @@ QVariantList MainController::GetConfiguredProcessNames() const
         }
     }
     return process_names_list;
+}
+
+int MainController::GetProcessStatus(const QString& process_id) const
+{
+    if (!process_manager_) {
+        return -1;  // 错误状态
+    }
+    return static_cast<int>(process_manager_->GetProcessStatus(process_id));
 }
 
 // ==================== 窗口嵌入相关方法实现 ====================

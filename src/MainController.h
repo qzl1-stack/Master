@@ -137,6 +137,8 @@ public:
     Q_INVOKABLE QJsonObject BroadcastCommand(const QString& command, 
                                const QJsonObject& parameters = QJsonObject());
     Q_INVOKABLE QVariantList GetConfiguredProcessNames() const;
+    
+    Q_INVOKABLE int GetProcessStatus(const QString& process_id) const;
 
     Q_INVOKABLE QStringList GetIpListFromDataStore() const;
     

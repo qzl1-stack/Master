@@ -53,8 +53,45 @@ Rectangle {
             return;
         }
         
-        console.log("[PluginDetailView] 开始卸载插件:", pluginId);
-        mainController.pluginManager.uninstallPlugin(pluginId);
+        console.log("[PluginDetailView] 开始卸载插件:", pluginData.name);
+        
+        // 第一步：检查插件进程是否正在运行，如果运行则发送优雅关闭命令
+        var process_id = pluginData.name;
+        var process_status = mainController.GetProcessStatus(process_id);
+        
+        // 进程状态: 0=NotStarted, 1=Starting, 2=Running, 3=Stopping, 4=Stopped, 5=Crashed, 6=Error
+        if (process_status === 2) {  // kRunning
+            console.log("[PluginDetailView] 进程运行中，发送优雅关闭命令到:", process_id);
+            
+            var params = {};
+            params["command"] = "graceful_shutdown";
+            mainController.SendCommandToProcess(process_id, "graceful_shutdown", params);
+            
+            // 等待进程关闭后再卸载（200ms宽限时间）
+            uninstallTimer.plugin_name_to_uninstall = pluginData.name;
+            uninstallTimer.restart();
+        } else {
+            console.log("[PluginDetailView] 进程未运行，直接卸载插件");
+            mainController.pluginManager.uninstallPlugin(pluginData.name);
+        }
+    }
+    
+    // 延迟卸载定时器
+    Timer {
+        id: uninstallTimer
+        interval: 1000  // 增加到1秒，确保进程完全释放资源
+        running: false
+        repeat: false
+        
+        property string plugin_name_to_uninstall: ""
+        
+        onTriggered: {
+            if (plugin_name_to_uninstall !== "") {
+                console.log("[PluginDetailView] 执行卸载:", plugin_name_to_uninstall);
+                mainController.pluginManager.uninstallPlugin(plugin_name_to_uninstall);
+                plugin_name_to_uninstall = "";
+            }
+        }
     }
     
     // 监听安装进度信号

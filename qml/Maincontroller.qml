@@ -104,6 +104,19 @@ Rectangle {
                 updateProcessList();
             }
         }
+        function onUninstallCompleted(plugin_id, success) {
+            if (success) {
+                // 卸载成功后，需要重新加载配置确保内存中的进程列表同步
+                var reload_success = mainController.ReloadConfiguration();
+                if (reload_success) {
+                    // 延迟后更新进程列表，确保配置已重新加载
+                    Qt.callLater(updateProcessList);
+                    console.log("[Maincontroller] 配置已重新加载，进程列表已更新");
+                } else {
+                    console.warn("[Maincontroller] 重新加载配置失败");
+                }
+            }
+        }
     }
 
     // ==================== 新的VSCode风格主布局 ====================
@@ -2349,12 +2362,8 @@ Rectangle {
                         hasChanges = true;
                     }
                 } else {
-                    // 如果是新进程，极少见。这里可以根据需求选择是否添加
-                    processStatusList.push({
-                        name: key,
-                        status: mapProcessStatus(processData.status)
-                    });
-                    hasChanges = true;
+                    // 忽略未配置的进程状态，避免卸载后图标被状态上报重新加回
+                    continue;
                 }
             }
         }
